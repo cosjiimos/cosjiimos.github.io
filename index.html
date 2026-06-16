@@ -1316,6 +1316,48 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      cursor: zoom-in;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 16, 20, 0.92);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      cursor: zoom-out;
+      padding: 32px;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      box-shadow: 0 12px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      background: transparent;
+      border: 0;
+      color: #fff;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0.75;
+    }
+
+    .lightbox-close:hover {
+      opacity: 1;
     }
 
     .work .slide.placeholder {
@@ -2921,6 +2963,11 @@
     </div>
   </div>
 
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+    <button class="lightbox-close" aria-label="close">×</button>
+    <img alt="">
+  </div>
+
   <script>
     /* ---------------- TAB SWITCHING ---------------- */
     const buttons = document.querySelectorAll('.nav-item');
@@ -3613,6 +3660,46 @@
             track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
           });
         }
+      });
+    })();
+
+    /* ---------------- LIGHTBOX (work slides) ---------------- */
+    (function () {
+      const lb = document.getElementById('lightbox');
+      if (!lb) return;
+      const lbImg = lb.querySelector('img');
+      const lbClose = lb.querySelector('.lightbox-close');
+
+      function open(src, alt) {
+        lbImg.src = src;
+        lbImg.alt = alt || '';
+        lb.classList.add('open');
+        lb.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function close() {
+        lb.classList.remove('open');
+        lb.setAttribute('aria-hidden', 'true');
+        lbImg.src = '';
+        document.body.style.overflow = '';
+      }
+
+      document.addEventListener('click', (e) => {
+        const img = e.target.closest('.work .slide img');
+        if (!img) return;
+        e.preventDefault();
+        e.stopPropagation();
+        open(img.currentSrc || img.src, img.alt);
+      });
+
+      lb.addEventListener('click', (e) => {
+        if (e.target === lbImg) return;
+        close();
+      });
+      lbClose.addEventListener('click', close);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lb.classList.contains('open')) close();
       });
     })();
   </script>
