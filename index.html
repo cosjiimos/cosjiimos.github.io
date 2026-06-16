@@ -2014,20 +2014,20 @@
             <div class="year-row">
               <div class="year">2026</div>
               <div class="pub-list">
-                <article class="pub" id="pub-canvas">
+                <article class="pub" id="pub-workflownet">
                   <div>
-                    <div class="pub-head"><span class="venue">ADR</span><span>SCOPUS · journal</span></div>
+                    <div class="pub-head"><span class="venue">ADR</span><span>SCOPUS · journal · 🥇 Cover Paper</span></div>
                     <h3>Workflow-Net: Toward Understanding Designer Workflows in Generative AI-Driven Systems through Comparing Node-and Prompt-Based Interfaces</h3>
                     <div class="authors">Tae Hee Jo†, <b>Jiin Choi†</b>, Semin Jin, Seung Won Lee, Yugyeong Jang, Sang Woon Park, Seonghoon Ban, Kyung Hoon Hyun</div>
-                    <div class="journal">Archives of Design Research (Accepted)</div>
+                    <div class="journal">Archives of Design Research, vol. 39, no. 2 (2026): 7–34</div>
                     <div class="links">
                       <a href="" target="_blank" rel="noopener">↗
                         doi</a>
                     </div>
                   </div>
                   <div class="pub-thumb">
-                    <img src="images/Rectangle.png"
-                      alt="Infinite Canvas paper thumbnail">
+                    <img src="images/thumbnails_ADR26_workflow.gif"
+                      alt="Workflow-Net paper thumbnail">
                   </div>
                 </article>
 
@@ -2996,6 +2996,14 @@
           authors: 'Yejin Yun†, Seung Won Lee†, <b>Jiin Choi†</b>, Kyung Hoon Hyun',
           doi: '#',
         },
+        workflownet: {
+          id: 'workflownet',
+          venue: 'ADR · 2026',
+          title: '<em>Workflow-Net</em> — Understanding Designer Workflows in GenAI-Driven Systems',
+          short: 'Workflow-Net — Comparing node- and prompt-based interfaces for designer workflows',
+          authors: 'Tae Hee Jo†, <b>Jiin Choi†</b>, Semin Jin, Seung Won Lee, Yugyeong Jang, Sang Woon Park, Seonghoon Ban, Kyung Hoon Hyun',
+          doi: '#',
+        },
       };
 
       /* ===== Keyword → related papers ===== */
@@ -3006,7 +3014,7 @@
         { word: 'intent', papers: ['bogen', 'genpara'] },
         { word: 'alignment', papers: ['genpara', 'bogen'] },
         { word: 'exploration', papers: ['sketch', 'genpara', 'bogen', 'canvas'] },
-        { word: 'GenAI', papers: ['sketch', 'genpara', 'multimodal'] },
+        { word: 'GenAI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet'] },
         { word: 'iterate', papers: ['genpara', 'bogen', 'canvas'] },
         { word: 'semantic', papers: ['cmlsearch', 'typeface'] },
         { word: 'multimodal', papers: ['multimodal'] },
@@ -3018,7 +3026,12 @@
         { word: 'CAD', papers: ['multimodal'] },
         { word: 'sketch', papers: ['sketch'] },
         { word: 'externalization', papers: ['canvas'] },
-        { word: 'design action', papers: ['canvas'] },
+        { word: 'design action', papers: ['canvas', 'workflownet'] },
+        { word: 'workflow', papers: ['workflownet', 'canvas'] },
+        { word: 'node-based', papers: ['workflownet'] },
+        { word: 'prompt-based', papers: ['workflownet', 'sketch'] },
+        { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas'] },
+        { word: 'infinite canvas', papers: ['canvas'] },
       ];
 
       let nodes = [];
