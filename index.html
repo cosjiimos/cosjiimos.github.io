@@ -3654,14 +3654,14 @@
           n.x += n.vx;
           n.y += n.vy;
 
-          /* layered wobble — keeps every node drifting forever, very gently */
-          const wob1 = Math.sin(t * 0.45 + n.phase);
-          const wob2 = Math.cos(t * 0.65 + n.phase * 0.7);
-          n.vx += wob1 * 0.0045;
-          n.vy += wob2 * 0.0045;
-          /* tiny jitter so motion never settles into a perfect loop */
-          n.vx += (Math.random() - 0.5) * 0.008;
-          n.vy += (Math.random() - 0.5) * 0.008;
+          /* layered wobble — barely-perceptible drift */
+          const wob1 = Math.sin(t * 0.18 + n.phase);
+          const wob2 = Math.cos(t * 0.26 + n.phase * 0.7);
+          n.vx += wob1 * 0.0015;
+          n.vy += wob2 * 0.0015;
+          /* almost-imperceptible jitter so motion never settles into a loop */
+          n.vx += (Math.random() - 0.5) * 0.002;
+          n.vy += (Math.random() - 0.5) * 0.002;
 
           /* soft mutual repulsion only — keeps the field spread out, no convergence */
           for (let j = 0; j < nodes.length; j++) {
@@ -3676,10 +3676,10 @@
             n.vy += (dy / d) * push;
           }
 
-          n.vx *= 0.96; n.vy *= 0.96;
-          /* speed cap so the drift stays slow & calm */
+          n.vx *= 0.94; n.vy *= 0.94;
+          /* speed cap so the drift stays barely-there */
           const sp = Math.hypot(n.vx, n.vy);
-          if (sp > 0.45) { n.vx = (n.vx / sp) * 0.45; n.vy = (n.vy / sp) * 0.45; }
+          if (sp > 0.18) { n.vx = (n.vx / sp) * 0.18; n.vy = (n.vy / sp) * 0.18; }
 
           const pad = 24;
           if (n.x < pad) { n.x = pad; n.vx *= -1; }
