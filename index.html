@@ -4439,17 +4439,22 @@
       const mouse = { x: -9999, y: -9999, active: false };
 
       function layout() {
-        const rect = canvas.getBoundingClientRect();
         DPR = Math.min(window.devicePixelRatio || 1, 2);
-        W = rect.width;
-        H = rect.height;
+        W = window.innerWidth - 340;
+        H = window.innerHeight;
+        if (window.innerWidth <= 980) W = window.innerWidth;
         canvas.width = W * DPR;
         canvas.height = H * DPR;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
         c.setTransform(DPR, 0, 0, DPR, 0, 0);
       }
 
       window.addEventListener('resize', layout);
       layout();
+      /* re-layout after fonts/styles settle */
+      setTimeout(layout, 50);
+      setTimeout(layout, 500);
 
       window.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
