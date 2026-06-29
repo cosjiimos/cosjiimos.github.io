@@ -735,90 +735,31 @@
       color: var(--ink-muted);
     }
 
-    .gc-papers-list .gpl-net-svg {
+    .gc-papers-list .gpl-net-canvas {
       width: 100%;
       height: 380px;
       display: block;
-      font-family: 'Fraunces', serif;
+      border-radius: 3px;
     }
 
-    .gc-papers-list .gpl-net-edge {
-      fill: none;
-      stroke: rgba(120, 115, 135, 0.28);
-      stroke-width: 1;
-      transition: stroke .25s ease, stroke-width .25s ease, opacity .25s ease;
-    }
-
-    .gc-papers-list.has-hover .gpl-net-edge:not(.hot) {
-      opacity: 0.18;
-    }
-
-    .gc-papers-list .gpl-net-edge.hot {
-      stroke: var(--accent);
-      stroke-width: 1.8;
-    }
-
-    .gc-papers-list .gpl-net-paper,
-    .gc-papers-list .gpl-net-theme {
-      cursor: pointer;
-      transition: opacity .25s ease;
-    }
-
-    .gc-papers-list.has-hover .gpl-net-paper:not(.hot),
-    .gc-papers-list.has-hover .gpl-net-theme:not(.hot) {
-      opacity: 0.32;
-    }
-
-    .gc-papers-list .gpl-net-halo {
-      fill: rgba(96, 153, 148, 0);
-      transition: fill .25s ease, r .25s ease;
-    }
-
-    .gc-papers-list .gpl-net-paper.hot .gpl-net-halo,
-    .gc-papers-list .gpl-net-theme.hot .gpl-net-halo {
-      fill: rgba(96, 153, 148, 0.18);
-    }
-
-    .gc-papers-list .gpl-net-dot {
-      fill: var(--accent-2);
-      transition: fill .25s ease, r .25s ease;
-    }
-
-    .gc-papers-list .gpl-net-paper.hot .gpl-net-dot {
-      fill: var(--accent);
-    }
-
-    .gc-papers-list .gpl-net-theme-dot {
-      fill: var(--accent);
-      transition: fill .25s ease, r .25s ease;
-    }
-
-    .gc-papers-list .gpl-net-paper-label {
+    .gc-papers-list .gpl-net-readout {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
       font-family: 'JetBrains Mono', monospace;
-      font-style: normal;
       font-size: 9.5px;
-      letter-spacing: .12em;
+      letter-spacing: .14em;
       text-transform: uppercase;
-      fill: var(--ink-muted);
-      pointer-events: none;
-      transition: fill .25s ease;
+      color: var(--ink-muted);
+      min-height: 18px;
     }
 
-    .gc-papers-list .gpl-net-paper.hot .gpl-net-paper-label {
-      fill: var(--accent);
-    }
-
-    .gc-papers-list .gpl-net-theme-label {
-      font-style: italic;
-      font-size: 12px;
-      fill: var(--ink-soft);
-      pointer-events: none;
-      transition: fill .25s ease, font-weight .25s ease;
-    }
-
-    .gc-papers-list .gpl-net-theme.hot .gpl-net-theme-label {
-      fill: var(--ink);
-      font-weight: 500;
+    .gc-papers-list .gpl-net-readout-label {
+      color: var(--ink-muted);
+      transition: color .25s ease;
     }
 
     @media (max-width: 760px) {
@@ -4184,14 +4125,7 @@
         hoverPanel.classList.add('show');
       }
 
-      /* ===== Selected Publications mode: list + shared theme network ===== */
-      const THEMES = [
-        { id: 'genai',        label: 'Generative AI' },
-        { id: 'workflow',     label: 'Designer Workflow' },
-        { id: 'design-space', label: 'Design Space' },
-        { id: 'interface',    label: 'Interface · System' },
-      ];
-
+      /* ===== Selected Publications mode: list + ASCII keyword field ===== */
       function jumpToPublication(id) {
         const tabBtn = document.querySelector('.nav-item[data-tab="publications"]');
         if (!tabBtn) return;
@@ -4233,165 +4167,238 @@
             </div>
             <aside class="gpl-network">
               <div class="gpl-net-head">
-                <span class="gpl-net-label">common threads</span>
-                <span class="gpl-net-hint">hover a paper to trace its themes</span>
+                <span class="gpl-net-label">keyword field</span>
+                <span class="gpl-net-hint">hover a paper to summon</span>
               </div>
-              <svg class="gpl-net-svg" aria-hidden="true"></svg>
+              <canvas class="gpl-net-canvas" aria-hidden="true"></canvas>
+              <div class="gpl-net-readout">
+                <span class="gpl-net-readout-label">·</span>
+                <span class="gpl-net-readout-text">4 papers · drifting</span>
+              </div>
             </aside>
           </div>
         `;
 
-        drawThemeNetwork(papersList.querySelector('.gpl-net-svg'), selected);
+        initKeywordField(selected);
 
-        /* row click → jump; row hover → highlight in network */
+        /* row click → jump; row hover → focus field on that paper */
         papersList.querySelectorAll('.gpl-row').forEach(row => {
           row.addEventListener('click', () => jumpToPublication(row.dataset.id));
-          row.addEventListener('mouseenter', () => highlightPaper(row.dataset.id, true));
-          row.addEventListener('mouseleave', () => highlightPaper(row.dataset.id, false));
+          row.addEventListener('mouseenter', () => focusPaper(row.dataset.id));
+          row.addEventListener('mouseleave', () => focusPaper(null));
         });
       }
 
-      /* === Theme network: 4 paper nodes (left ring) + 4 theme nodes (right ring) === */
-      function drawThemeNetwork(svg, papers) {
-        if (!svg) return;
-        const ns = 'http://www.w3.org/2000/svg';
-        while (svg.firstChild) svg.removeChild(svg.firstChild);
-        const W = 520, H = 380;
-        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      /* ===== ASCII keyword field (canvas) ===== */
+      let kwState = null;
 
-        /* layout: papers on the left vertical band, themes on the right vertical band */
-        const PX = 80, TX = W - 80;
-        const padY = 50;
-        const stepP = (H - padY * 2) / Math.max(1, papers.length - 1);
-        const stepT = (H - padY * 2) / Math.max(1, THEMES.length - 1);
+      function initKeywordField(papers) {
+        const canvas = papersList && papersList.querySelector('.gpl-net-canvas');
+        const readout = papersList && papersList.querySelector('.gpl-net-readout-text');
+        const readoutLabel = papersList && papersList.querySelector('.gpl-net-readout-label');
+        if (!canvas) return;
+        const c = canvas.getContext('2d');
 
-        const pos = new Map();
-        papers.forEach((p, i) => pos.set('p:' + p.id, { x: PX, y: padY + i * stepP, kind: 'paper', data: p }));
-        THEMES.forEach((t, i) => pos.set('t:' + t.id, { x: TX, y: padY + i * stepT, kind: 'theme', data: t }));
+        /* build flat keyword list with owner-paper for each */
+        const items = [];
+        const colorByPaper = {};
+        const palette = [
+          'rgba(96, 153, 148, ALPHA)',   /* accent mint */
+          'rgba(124, 119, 155, ALPHA)',  /* accent-2 lavender */
+          'rgba(127, 131, 84, ALPHA)',   /* accent-3 olive */
+          'rgba(74, 74, 82, ALPHA)',     /* soft ink */
+        ];
+        papers.forEach((p, i) => {
+          colorByPaper[p.id] = palette[i % palette.length];
+          (p.kws || []).forEach(k => {
+            items.push({
+              paper: p.id,
+              label: k,
+              phase: Math.random() * Math.PI * 2,
+              vphase: 0.6 + Math.random() * 0.9,
+              jitter: Math.random() * 0.6 + 0.4,
+              homeAngle: Math.random() * Math.PI * 2,
+              x: 0, y: 0, tx: 0, ty: 0,
+            });
+          });
+        });
 
-        /* edges: every paper → its themes (curved) */
-        for (const p of papers) {
-          const a = pos.get('p:' + p.id);
-          for (const tid of (p.themes || [])) {
-            const b = pos.get('t:' + tid);
-            if (!b) continue;
-            const path = document.createElementNS(ns, 'path');
-            const cx1 = a.x + 160, cx2 = b.x - 160;
-            path.setAttribute('d', `M ${a.x} ${a.y} C ${cx1} ${a.y}, ${cx2} ${b.y}, ${b.x} ${b.y}`);
-            path.setAttribute('class', 'gpl-net-edge');
-            path.dataset.paper = p.id;
-            path.dataset.theme = tid;
-            svg.appendChild(path);
+        kwState = {
+          canvas, c, items, papers,
+          colorByPaper,
+          focusId: null,
+          W: 0, H: 0, DPR: 1,
+          t: 0,
+          readout, readoutLabel,
+          running: false,
+        };
+
+        const ro = new ResizeObserver(layout);
+        ro.observe(canvas);
+        layout();
+        if (!kwState.running) { kwState.running = true; requestAnimationFrame(tickKW); }
+
+        function layout() {
+          const rect = canvas.getBoundingClientRect();
+          const DPR = Math.min(window.devicePixelRatio || 1, 2);
+          kwState.DPR = DPR;
+          kwState.W = rect.width;
+          kwState.H = rect.height;
+          canvas.width  = rect.width * DPR;
+          canvas.height = rect.height * DPR;
+          canvas.style.width  = rect.width + 'px';
+          canvas.style.height = rect.height + 'px';
+          c.setTransform(DPR, 0, 0, DPR, 0, 0);
+          placeHomes();
+        }
+
+        function placeHomes() {
+          /* default drifting layout: random scattered home positions */
+          const { W, H, items } = kwState;
+          const padX = 30, padY = 26;
+          for (let i = 0; i < items.length; i++) {
+            const it = items[i];
+            const t = (items.length === 1) ? 0.5 : i / (items.length - 1);
+            /* arrange by paper: group on a soft arc per paper */
+            const paperIdx = papers.findIndex(p => p.id === it.paper);
+            const groupT = (paperIdx + 0.5) / Math.max(1, papers.length);
+            const baseY = padY + groupT * (H - padY * 2);
+            const baseX = padX + (i % 6) * ((W - padX * 2) / 6);
+            it.hx = baseX + (Math.random() * 24 - 12);
+            it.hy = baseY + (Math.random() * 30 - 15);
+            it.x = it.hx;
+            it.y = it.hy;
+          }
+        }
+      }
+
+      function focusPaper(id) {
+        if (!kwState) return;
+        kwState.focusId = id;
+        if (papersList) papersList.classList.toggle('has-hover', !!id);
+        if (kwState.readout && kwState.readoutLabel) {
+          if (id) {
+            const p = PAPERS[id];
+            kwState.readoutLabel.textContent = (p.venue.split('·')[0] || p.venue).trim();
+            kwState.readoutLabel.style.color = 'var(--accent)';
+            kwState.readout.textContent = `${(p.kws || []).length} keywords · summoning`;
+          } else {
+            kwState.readoutLabel.textContent = '·';
+            kwState.readoutLabel.style.color = 'var(--ink-muted)';
+            kwState.readout.textContent = `${kwState.papers.length} papers · drifting`;
+          }
+        }
+        /* highlight matching row */
+        if (papersList) {
+          papersList.querySelectorAll('.gpl-row').forEach(r =>
+            r.classList.toggle('hot', !!id && r.dataset.id === id)
+          );
+        }
+      }
+
+      function tickKW() {
+        if (!kwState) return;
+        const { c, W, H, items, t } = kwState;
+        kwState.t = t + 0.012;
+        const T = kwState.t;
+        c.clearRect(0, 0, W, H);
+
+        /* --- background ASCII noise field (uniform monospace dots that breathe) --- */
+        const STEP = 18;
+        c.font = `10px 'JetBrains Mono', monospace`;
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        for (let gy = STEP / 2; gy < H; gy += STEP) {
+          for (let gx = STEP / 2; gx < W; gx += STEP) {
+            const phase = gx * 0.022 + gy * 0.027;
+            const wob = Math.sin(T * 1.4 + phase) * Math.cos(T * 0.8 + phase * 0.5);
+            const focus = kwState.focusId ? 0.55 : 0.25;
+            const a = 0.06 + Math.abs(wob) * 0.05 + (kwState.focusId ? 0.04 : 0);
+            const ox = Math.cos(T * 1.1 + phase) * 1.6;
+            const oy = wob * 2.4;
+            const g = (Math.floor(T * 2 + phase) % 3 === 0) ? '·' : '·';
+            c.fillStyle = `rgba(74, 74, 82, ${a.toFixed(3)})`;
+            c.fillText(g, gx + ox, gy + oy);
+          }
+        }
+        c.textAlign = 'left';
+        c.textBaseline = 'alphabetic';
+
+        /* --- keyword nodes --- */
+        const focusId = kwState.focusId;
+        const focused = items.filter(it => focusId && it.paper === focusId);
+
+        /* if focusing, pull focused items into a centered loose cluster */
+        if (focusId) {
+          const cx = W * 0.5, cy = H * 0.5;
+          const R = Math.min(W, H) * 0.34;
+          focused.forEach((it, i) => {
+            const a = (i / Math.max(1, focused.length)) * Math.PI * 2 + T * 0.2;
+            it.tx = cx + Math.cos(a) * R * (0.55 + 0.45 * Math.sin(T + i));
+            it.ty = cy + Math.sin(a) * R * (0.55 + 0.45 * Math.cos(T + i));
+          });
+          for (const it of items) {
+            if (it.paper !== focusId) {
+              it.tx = it.hx;
+              it.ty = it.hy;
+            }
+          }
+        } else {
+          /* drifting: targets oscillate around home */
+          for (const it of items) {
+            it.tx = it.hx + Math.cos(T * it.vphase + it.phase) * 14 * it.jitter;
+            it.ty = it.hy + Math.sin(T * it.vphase * 0.8 + it.phase) * 12 * it.jitter;
           }
         }
 
-        /* paper nodes (dots only — labels live in the list on the left side) */
-        for (const p of papers) {
-          const a = pos.get('p:' + p.id);
-          const g = document.createElementNS(ns, 'g');
-          g.setAttribute('class', 'gpl-net-paper');
-          g.setAttribute('transform', `translate(${a.x} ${a.y})`);
-          g.dataset.paper = p.id;
-
-          const halo = document.createElementNS(ns, 'circle');
-          halo.setAttribute('r', 12);
-          halo.setAttribute('class', 'gpl-net-halo');
-          g.appendChild(halo);
-
-          const dot = document.createElementNS(ns, 'circle');
-          dot.setAttribute('r', 5);
-          dot.setAttribute('class', 'gpl-net-dot');
-          g.appendChild(dot);
-
-          /* short label that mirrors the venue chip on the left */
-          const t = document.createElementNS(ns, 'text');
-          t.setAttribute('x', -14);
-          t.setAttribute('y', 4);
-          t.setAttribute('text-anchor', 'end');
-          t.setAttribute('class', 'gpl-net-paper-label');
-          t.textContent = (p.venue.split('·')[0] || p.venue).trim();
-          g.appendChild(t);
-
-          g.addEventListener('mouseenter', () => highlightPaper(p.id, true));
-          g.addEventListener('mouseleave', () => highlightPaper(p.id, false));
-          g.addEventListener('click', () => jumpToPublication(p.id));
-
-          svg.appendChild(g);
+        /* ease toward target */
+        for (const it of items) {
+          it.x += (it.tx - it.x) * 0.06;
+          it.y += (it.ty - it.y) * 0.06;
         }
 
-        /* theme nodes */
-        for (const t of THEMES) {
-          const b = pos.get('t:' + t.id);
-          const g = document.createElementNS(ns, 'g');
-          g.setAttribute('class', 'gpl-net-theme');
-          g.setAttribute('transform', `translate(${b.x} ${b.y})`);
-          g.dataset.theme = t.id;
-
-          const halo = document.createElementNS(ns, 'circle');
-          halo.setAttribute('r', 14);
-          halo.setAttribute('class', 'gpl-net-halo');
-          g.appendChild(halo);
-
-          const dot = document.createElementNS(ns, 'circle');
-          dot.setAttribute('r', 7);
-          dot.setAttribute('class', 'gpl-net-theme-dot');
-          g.appendChild(dot);
-
-          const label = document.createElementNS(ns, 'text');
-          label.setAttribute('x', 14);
-          label.setAttribute('y', 4);
-          label.setAttribute('class', 'gpl-net-theme-label');
-          label.textContent = t.label;
-          g.appendChild(label);
-
-          g.addEventListener('mouseenter', () => highlightTheme(t.id, true));
-          g.addEventListener('mouseleave', () => highlightTheme(t.id, false));
-          svg.appendChild(g);
+        /* connection lines between focused items */
+        if (focusId && focused.length > 1) {
+          for (let i = 0; i < focused.length; i++) {
+            for (let j = i + 1; j < focused.length; j++) {
+              const a = focused[i], b = focused[j];
+              const dx = a.x - b.x, dy = a.y - b.y;
+              const d2 = dx * dx + dy * dy;
+              const R = 220;
+              if (d2 < R * R) {
+                const alpha = 0.35 * (1 - Math.sqrt(d2) / R);
+                c.strokeStyle = `rgba(96, 153, 148, ${alpha.toFixed(3)})`;
+                c.lineWidth = 0.8;
+                c.beginPath();
+                c.moveTo(a.x, a.y);
+                c.lineTo(b.x, b.y);
+                c.stroke();
+              }
+            }
+          }
         }
-      }
 
-      function highlightPaper(id, on) {
-        const root = papersList;
-        if (!root) return;
-        root.classList.toggle('has-hover', on);
-        root.querySelectorAll('.gpl-row').forEach(r =>
-          r.classList.toggle('hot', on && r.dataset.id === id)
-        );
-        root.querySelectorAll('.gpl-net-edge').forEach(e =>
-          e.classList.toggle('hot', on && e.dataset.paper === id)
-        );
-        root.querySelectorAll('.gpl-net-paper').forEach(p =>
-          p.classList.toggle('hot', on && p.dataset.paper === id)
-        );
-        /* themes connected to this paper light up */
-        const paper = PAPERS[id];
-        const themeSet = new Set((paper && paper.themes) || []);
-        root.querySelectorAll('.gpl-net-theme').forEach(t =>
-          t.classList.toggle('hot', on && themeSet.has(t.dataset.theme))
-        );
-      }
+        /* draw labels */
+        c.font = `italic 12.5px 'Fraunces', serif`;
+        for (const it of items) {
+          const isFocused = focusId && it.paper === focusId;
+          const dim = focusId && !isFocused;
+          const baseAlpha = dim ? 0.10 : (isFocused ? 0.95 : 0.55);
+          const tpl = kwState.colorByPaper[it.paper] || 'rgba(74, 74, 82, ALPHA)';
+          c.fillStyle = tpl.replace('ALPHA', baseAlpha.toFixed(3));
+          c.fillText(it.label, it.x, it.y);
 
-      function highlightTheme(id, on) {
-        const root = papersList;
-        if (!root) return;
-        root.classList.toggle('has-hover', on);
-        const paperSet = new Set();
-        for (const p of Object.values(PAPERS)) {
-          if (p.selected && (p.themes || []).includes(id)) paperSet.add(p.id);
+          /* glyph halo before/after the label, intensifies on focus */
+          c.font = `10px 'JetBrains Mono', monospace`;
+          const haloAlpha = isFocused ? 0.6 : (dim ? 0.05 : 0.18);
+          c.fillStyle = `rgba(96, 153, 148, ${haloAlpha.toFixed(3)})`;
+          const glyph = isFocused ? '+' : '·';
+          c.fillText(glyph, it.x - 10, it.y);
+          c.fillText(glyph, it.x + c.measureText(it.label).width + 2, it.y);
+          c.font = `italic 12.5px 'Fraunces', serif`;
         }
-        root.querySelectorAll('.gpl-net-edge').forEach(e =>
-          e.classList.toggle('hot', on && e.dataset.theme === id)
-        );
-        root.querySelectorAll('.gpl-net-theme').forEach(t =>
-          t.classList.toggle('hot', on && t.dataset.theme === id)
-        );
-        root.querySelectorAll('.gpl-net-paper').forEach(p =>
-          p.classList.toggle('hot', on && paperSet.has(p.dataset.paper))
-        );
-        root.querySelectorAll('.gpl-row').forEach(r =>
-          r.classList.toggle('hot', on && paperSet.has(r.dataset.id))
-        );
+
+        requestAnimationFrame(tickKW);
       }
 
       renderPapersList();
