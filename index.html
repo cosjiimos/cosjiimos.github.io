@@ -360,6 +360,50 @@
       font-weight: 500;
     }
 
+    /* Toggle above the graph card */
+    .gc-toggle {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .gc-tg-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      color: var(--ink-muted);
+      padding: 6px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: color .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .gc-tg-btn:hover {
+      color: var(--ink-soft);
+      border-color: var(--ink-muted);
+    }
+
+    .gc-tg-btn.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(96, 153, 148, 0.06);
+    }
+
+    .gc-tg-btn .gc-tg-num {
+      color: var(--ink-muted);
+      font-size: 9px;
+    }
+
+    .gc-tg-btn.active .gc-tg-num {
+      color: var(--accent);
+    }
+
     /* Home graph card */
     .graph-card {
       position: relative;
@@ -418,6 +462,185 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    /* Hover side-panel: appears in keywords mode while the cursor is on a node (no pin) */
+    .graph-card .gc-hover-panel {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 260px;
+      max-height: calc(100% - 28px);
+      overflow: auto;
+      z-index: 3;
+      background: rgba(252, 252, 250, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 12px 14px;
+      box-shadow: 0 12px 28px -16px rgba(22, 22, 26, 0.18);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity .14s ease, transform .14s ease;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    .graph-card .gc-hover-panel.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .graph-card .gc-hover-panel .ghp-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .graph-card .gc-hover-panel .ghp-word {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-size: 20px;
+      color: var(--accent);
+      margin: 2px 0 10px;
+      line-height: 1.05;
+    }
+
+    .graph-card .gc-hover-panel .ghp-item {
+      display: block;
+      padding: 7px 0;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .graph-card .gc-hover-panel .ghp-item:first-of-type {
+      border-top: 0;
+    }
+
+    .graph-card .gc-hover-panel .ghp-item .ghp-venue {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .graph-card .gc-hover-panel .ghp-item .ghp-title {
+      font-family: 'Fraunces', serif;
+      font-size: 12.5px;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .graph-card .gc-hover-panel .ghp-item .ghp-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    /* Papers mode: chronological list replacing the canvas */
+    .graph-card[data-view="papers"] canvas,
+    .graph-card[data-view="papers"] .gc-hint,
+    .graph-card[data-view="papers"] .gc-hover-panel,
+    .graph-card[data-view="papers"] .paper-popup {
+      display: none !important;
+    }
+
+    .graph-card[data-view="papers"] {
+      aspect-ratio: auto;
+      max-height: none;
+      padding: 22px 26px;
+    }
+
+    .graph-card .gc-papers-list {
+      display: none;
+      position: relative;
+      z-index: 2;
+    }
+
+    .graph-card[data-view="papers"] .gc-papers-list {
+      display: block;
+    }
+
+    .gc-papers-list .gpl-year {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 18px;
+      align-items: start;
+      padding: 14px 0;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .gc-papers-list .gpl-year:first-child {
+      border-top: 0;
+    }
+
+    .gc-papers-list .gpl-yr {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-muted);
+      letter-spacing: .14em;
+      padding-top: 4px;
+    }
+
+    .gc-papers-list .gpl-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .gc-papers-list .gpl-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      padding: 6px 0;
+      cursor: pointer;
+      border-bottom: 1px dotted var(--line);
+      transition: background .15s ease, padding .15s ease;
+    }
+
+    .gc-papers-list .gpl-item:hover {
+      background: rgba(96, 153, 148, 0.05);
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+
+    .gc-papers-list .gpl-venue {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .gc-papers-list .gpl-title {
+      font-family: 'Fraunces', serif;
+      font-size: 14px;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .gc-papers-list .gpl-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .gc-papers-list .gpl-authors {
+      display: block;
+      margin-top: 3px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    .gc-papers-list .gpl-authors b {
+      color: var(--ink-soft);
+      font-weight: 500;
     }
 
     .graph-card .gc-hint::before {
@@ -1948,10 +2171,21 @@
           </div>
         </div>
 
-        <div class="graph-card">
+        <div class="gc-toggle" role="tablist" aria-label="Publications view">
+          <button class="gc-tg-btn active" data-view="keywords" role="tab" aria-selected="true">
+            <span class="gc-tg-num">01</span> keywords
+          </button>
+          <button class="gc-tg-btn" data-view="papers" role="tab" aria-selected="false">
+            <span class="gc-tg-num">02</span> papers
+          </button>
+        </div>
+
+        <div class="graph-card" data-view="keywords">
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
-          <div class="gc-hint">click keywords to explore</div>
+          <div class="gc-hint">hover keywords · click to pin</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
+          <div class="gc-hover-panel" id="gc-hover-panel" aria-hidden="true"></div>
+          <div class="gc-papers-list" id="gc-papers-list" aria-hidden="true"></div>
         </div>
 
       </section>
@@ -3057,6 +3291,7 @@
       const PAPERS = {
         bogen: {
           id: 'bogen',
+          year: 2026,
           venue: 'Sci. Reports · 2026',
           title: '<em>BOgen</em> — Part-level 3D shape generation driven by user intention inference',
           short: 'BOgen — Part-level 3D shape generation via preferential BO',
@@ -3065,6 +3300,7 @@
         },
         genpara: {
           id: 'genpara',
+          year: 2025,
           venue: 'CHI \'25 · ACM',
           title: '<em>GenPara</em> — Enhancing 3D Design Editing with Text-Conditional Shape Parameters',
           short: 'GenPara — 3D design editing via text-conditional shape parameters',
@@ -3073,6 +3309,7 @@
         },
         cmlsearch: {
           id: 'cmlsearch',
+          year: 2025,
           venue: 'JCDE · 2025',
           title: '<em>CMLsearch</em> — Semantic Visual Search via Colour, Material, Lighting',
           short: 'CMLsearch — Semantic visual search for interior images',
@@ -3081,6 +3318,7 @@
         },
         multimodal: {
           id: 'multimodal',
+          year: 2025,
           venue: 'CHI \'25 Workshop',
           title: 'Toward <em>AI-driven Multimodal Interfaces</em> for Industrial CAD',
           short: 'Multimodal CAD — AI-driven interfaces for industrial 3D modeling',
@@ -3089,6 +3327,7 @@
         },
         typeface: {
           id: 'typeface',
+          year: 2024,
           venue: 'Sci. Reports · 2024',
           title: '<em>Typeface Network</em> and the Principle of Font Pairing',
           short: 'Typeface Network — Quantitative principles of font pairing',
@@ -3097,6 +3336,7 @@
         },
         sketch: {
           id: 'sketch',
+          year: 2024,
           venue: 'CHI \'24 · ACM',
           title: 'The Impact of <em>Sketch-guided</em> vs. <em>Prompt-guided</em> 3D GenAIs on Design Exploration',
           short: 'Sketch vs. Prompt — How interaction modality shapes 3D design exploration',
@@ -3105,6 +3345,7 @@
         },
         canvas: {
           id: 'canvas',
+          year: 2026,
           venue: 'CHI \'26 EA',
           title: 'Modeling Sequential Design Actions as Designer <em>Externalization</em> on an Infinite Canvas',
           short: 'Sequential design actions as externalization on an infinite canvas',
@@ -3113,6 +3354,7 @@
         },
         workflownet: {
           id: 'workflownet',
+          year: 2026,
           venue: 'ADR · 2026',
           title: '<em>Workflow-Net</em> — Understanding Designer Workflows in GenAI-Driven Systems',
           short: 'Workflow-Net — Comparing node- and prompt-based interfaces for designer workflows',
@@ -3157,40 +3399,31 @@
 
       function build() {
         const area = W * H;
-        const KN = Math.min(KEYWORD_MAP.length, Math.max(8, Math.min(12, Math.round(area / 60000))));
+        const N = Math.min(KEYWORD_MAP.length, Math.max(10, Math.min(15, Math.round(area / 48000))));
         nodes = [];
 
-        const minDist = Math.min(W, H) * 0.14;
+        const minDist = Math.min(W, H) * 0.16;
         const minDistSq = minDist * minDist;
 
-        function placeOne() {
-          let attempts = 0;
-          while (attempts++ < 200) {
-            const x = 80 + Math.random() * (W - 160);
-            const y = 80 + Math.random() * (H - 160);
-            let ok = true;
-            for (const m of nodes) {
-              const dx = m.x - x, dy = m.y - y;
-              if (dx * dx + dy * dy < minDistSq) { ok = false; break; }
-            }
-            if (ok) return { x, y };
-          }
-          return { x: 80 + Math.random() * (W - 160), y: 80 + Math.random() * (H - 160) };
-        }
-
-        /* ---- keyword nodes (subset, shuffled each load) ---- */
         const shuffled = KEYWORD_MAP.slice().sort(() => Math.random() - 0.5);
-        const chosenKeywords = shuffled.slice(0, KN);
-        const paperIdsToInclude = new Set();
-        for (const k of chosenKeywords) for (const p of k.papers) paperIdsToInclude.add(p);
 
-        for (const entry of chosenKeywords) {
-          const pos = placeOne();
+        let idx = 0;
+        let attempts = 0;
+        while (nodes.length < N && idx < shuffled.length && attempts < N * 200) {
+          attempts++;
+          const x = 80 + Math.random() * (W - 160);
+          const y = 80 + Math.random() * (H - 160);
+          let ok = true;
+          for (const m of nodes) {
+            const dx = m.x - x, dy = m.y - y;
+            if (dx * dx + dy * dy < minDistSq) { ok = false; break; }
+          }
+          if (!ok) continue;
+
+          const entry = shuffled[idx++];
           const r = Math.random();
           nodes.push({
-            kind: 'keyword',
-            id: 'kw:' + entry.word,
-            x: pos.x, y: pos.y,
+            x, y,
             vx: (Math.random() - 0.5) * 0.18,
             vy: (Math.random() - 0.5) * 0.18,
             ox: 0, oy: 0,
@@ -3202,48 +3435,24 @@
           });
         }
 
-        /* ---- paper nodes (only papers referenced by chosen keywords) ---- */
-        for (const pid of paperIdsToInclude) {
-          const p = PAPERS[pid];
-          if (!p) continue;
-          const pos = placeOne();
-          /* paper label: short venue tag (e.g. "BOgen") for compactness */
-          const labelMatch = p.short && p.short.split('—')[0].trim();
-          const label = labelMatch || pid;
-          nodes.push({
-            kind: 'paper',
-            id: 'pp:' + pid,
-            paperId: pid,
-            x: pos.x, y: pos.y,
-            vx: (Math.random() - 0.5) * 0.12,
-            vy: (Math.random() - 0.5) * 0.12,
-            ox: 0, oy: 0,
-            baseR: 5.5,
-            color: COLORS.paper,
-            label,
-            phase: Math.random() * Math.PI * 2,
-          });
-        }
-
-        /* measure label widths and decide left/right */
+        ctx.font = `italic 14px Fraunces, serif`;
         for (const n of nodes) {
-          ctx.font = n.kind === 'paper'
-            ? `500 11px 'JetBrains Mono', monospace`
-            : `italic 14px Fraunces, serif`;
           n.labelW = ctx.measureText(n.label).width;
           n.labelLeft = (n.x + n.labelW + 30) > (W - 12);
         }
 
-        /* ---- edges: only between keyword and its papers (bipartite) ---- */
+        /* k-NN edges */
         edges = [];
-        const idIndex = new Map();
-        nodes.forEach((n, i) => idIndex.set(n.id, i));
+        const K = 3;
         for (let i = 0; i < nodes.length; i++) {
-          const n = nodes[i];
-          if (n.kind !== 'keyword') continue;
-          for (const pid of n.papers) {
-            const j = idIndex.get('pp:' + pid);
-            if (j !== undefined) edges.push({ a: i, b: j });
+          const dists = nodes.map((n, j) => ({
+            j, d: (n.x - nodes[i].x) ** 2 + (n.y - nodes[i].y) ** 2
+          })).filter(o => o.j !== i).sort((a, b) => a.d - b.d);
+          for (let k = 0; k < Math.min(K, dists.length); k++) {
+            const j = dists[k].j;
+            if (!edges.find(e => (e.a === i && e.b === j) || (e.a === j && e.b === i))) {
+              edges.push({ a: i, b: j });
+            }
           }
         }
       }
@@ -3297,62 +3506,32 @@
       /* ----- popup logic ----- */
       function openPopup(idx) {
         const n = nodes[idx];
-        if (!n) return;
+        if (!n || !n.papers || !n.papers.length) return;
         pinnedIdx = idx;
 
-        if (n.kind === 'keyword') {
-          if (!n.papers || !n.papers.length) return;
-          const items = n.papers.map(pid => {
-            const p = PAPERS[pid];
-            if (!p) return '';
-            return `
-          <button class="pp-item" data-id="${p.id}">
-            <span class="pp-item-venue">${p.venue}</span>
-            <span class="pp-item-title">${p.short}</span>
-            <span class="pp-item-authors">${p.authors}</span>
-          </button>`;
-          }).join('');
+        const items = n.papers.map(pid => {
+          const p = PAPERS[pid];
+          if (!p) return '';
+          return `
+        <button class="pp-item" data-id="${p.id}">
+          <span class="pp-item-venue">${p.venue}</span>
+          <span class="pp-item-title">${p.short}</span>
+          <span class="pp-item-authors">${p.authors}</span>
+        </button>`;
+        }).join('');
 
-          popup.innerHTML = `
-        <button class="pp-close" aria-label="close">×</button>
-        <div class="pp-keyword">
-          <span class="pp-keyword-label">keyword</span>
-          <span class="pp-keyword-word">${n.label}</span>
-        </div>
-        <div class="pp-count">${n.papers.length} related publication${n.papers.length > 1 ? 's' : ''}</div>
-        <div class="pp-items">${items}</div>
-      `;
-        } else if (n.kind === 'paper') {
-          const p = PAPERS[n.paperId];
-          if (!p) return;
-          /* find all keywords mapped to this paper */
-          const relatedKeywords = KEYWORD_MAP
-            .filter(k => k.papers.includes(n.paperId))
-            .map(k => k.word);
-
-          const kwChips = relatedKeywords
-            .map(w => `<span class="pp-kw-chip">${w}</span>`)
-            .join('');
-
-          popup.innerHTML = `
-        <button class="pp-close" aria-label="close">×</button>
-        <div class="pp-keyword">
-          <span class="pp-keyword-label">paper</span>
-          <span class="pp-keyword-word">${p.venue}</span>
-        </div>
-        <div class="pp-count">${p.short}</div>
-        <div class="pp-items">
-          <button class="pp-item" data-id="${p.id}">
-            <span class="pp-item-title">${p.title}</span>
-            <span class="pp-item-authors">${p.authors}</span>
-          </button>
-        </div>
-        ${relatedKeywords.length ? `<div class="pp-kw-row"><span class="pp-keyword-label">keywords</span>${kwChips}</div>` : ''}
-      `;
-        }
-
+        popup.innerHTML = `
+      <button class="pp-close" aria-label="close">×</button>
+      <div class="pp-keyword">
+        <span class="pp-keyword-label">keyword</span>
+        <span class="pp-keyword-word">${n.label}</span>
+      </div>
+      <div class="pp-count">${n.papers.length} related publication${n.papers.length > 1 ? 's' : ''}</div>
+      <div class="pp-items">${items}</div>
+    `;
         positionPopup(idx);
         popup.classList.add('open');
+        if (typeof updateHoverPanel === 'function') updateHoverPanel();
 
         popup.querySelector('.pp-close').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -3380,6 +3559,7 @@
       function closePopup() {
         popup.classList.remove('open');
         pinnedIdx = -1;
+        if (typeof updateHoverPanel === 'function') updateHoverPanel();
       }
 
       function positionPopup(idx) {
@@ -3446,12 +3626,14 @@
         }
 
         /* normal hover */
+        const prev = hoverIdx;
         hoverIdx = nodeAt(mouse.x, mouse.y);
         if (hoverIdx >= 0) {
           card.classList.add('has-pointer');
         } else {
           card.classList.remove('has-pointer');
         }
+        if (hoverIdx !== prev) updateHoverPanel();
       });
 
       card.addEventListener('mousedown', (e) => {
@@ -3504,6 +3686,7 @@
         mouse.x = -9999; mouse.y = -9999;
         hoverIdx = -1;
         card.classList.remove('has-pointer');
+        updateHoverPanel();
       });
 
       /* touch — supports both tap (popup) and drag (move node) */
@@ -3567,20 +3750,10 @@
 
       /* ----- main render loop ----- */
       let t = 0;
-      function neighborsOf(idx) {
-        const set = new Set();
-        if (idx < 0) return set;
-        for (const e of edges) {
-          if (e.a === idx) set.add(e.b);
-          else if (e.b === idx) set.add(e.a);
-        }
-        return set;
-      }
       function tick() {
         t += 0.008;
         ctx.clearRect(0, 0, W, H);
         const activeIdx = pinnedIdx >= 0 ? pinnedIdx : hoverIdx;
-        const neighborSet = neighborsOf(activeIdx);
 
         for (const n of nodes) {
           n.x += n.vx;
@@ -3630,22 +3803,15 @@
           const ax = a.x + a.ox, ay = a.y + a.oy;
           const bx = b.x + b.ox, by = b.y + b.oy;
 
-          /* highlight edges incident to the hovered/pinned node */
           const incident = (e.a === activeIdx || e.b === activeIdx);
-          const dim = (activeIdx >= 0 && !incident);
-
-          ctx.globalAlpha = dim ? 0.28 : 1;
           ctx.strokeStyle = incident
-            ? 'rgba(96, 153, 148, 0.65)'
+            ? 'rgba(96, 153, 148, 0.55)'
             : COLORS.edge;
-          ctx.lineWidth = incident ? 1.4 : 0.9;
           ctx.beginPath();
           ctx.moveTo(ax, ay);
           ctx.lineTo(bx, by);
           ctx.stroke();
         }
-        ctx.globalAlpha = 1;
-        ctx.lineWidth = 0.9;
 
         /* nodes */
         for (let i = 0; i < nodes.length; i++) {
@@ -3655,11 +3821,6 @@
 
           const isHover = (i === hoverIdx);
           const isPinned = (i === pinnedIdx);
-          const isPaper = (n.kind === 'paper');
-          const isNeighbor = neighborSet.has(i);
-          const isDimmed = (activeIdx >= 0 && !isHover && !isPinned && !isNeighbor);
-
-          ctx.globalAlpha = isDimmed ? 0.32 : 1;
 
           /* ambient glow on every node — soft, dreamy */
           {
@@ -3687,44 +3848,21 @@
             ctx.fill();
           }
 
-          const r = n.baseR + Math.sin(t * 1.2 + n.phase) * 0.5 + (isHover ? 1.4 : 0);
-
           /* pinned ring */
           if (isPinned) {
             ctx.strokeStyle = 'rgba(96, 153, 148, 0.85)';
             ctx.lineWidth = 1.4;
             ctx.beginPath();
-            if (isPaper) {
-              const rr = r + 5;
-              ctx.moveTo(x, y - rr); ctx.lineTo(x + rr, y);
-              ctx.lineTo(x, y + rr); ctx.lineTo(x - rr, y);
-              ctx.closePath();
-            } else {
-              ctx.arc(x, y, r + 5, 0, Math.PI * 2);
-            }
+            ctx.arc(x, y, n.baseR + 5, 0, Math.PI * 2);
             ctx.stroke();
             ctx.lineWidth = 0.9;
           }
 
+          const r = n.baseR + Math.sin(t * 1.2 + n.phase) * 0.5 + (isHover ? 1.4 : 0);
           ctx.fillStyle = isHover || isPinned ? COLORS.paper : n.color;
           ctx.beginPath();
-          if (isPaper) {
-            /* diamond */
-            ctx.moveTo(x, y - r); ctx.lineTo(x + r, y);
-            ctx.lineTo(x, y + r); ctx.lineTo(x - r, y);
-            ctx.closePath();
-          } else {
-            ctx.arc(x, y, r, 0, Math.PI * 2);
-          }
+          ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
-
-          /* outline for paper nodes (so they read as distinct) */
-          if (isPaper) {
-            ctx.strokeStyle = 'rgba(74, 74, 82, 0.55)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.lineWidth = 0.9;
-          }
 
           /* tiny inner highlight on the node — gives it a "lit from above" feel */
           const hi = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
@@ -3732,22 +3870,14 @@
           hi.addColorStop(0.7, 'rgba(255, 255, 255, 0)');
           ctx.fillStyle = hi;
           ctx.beginPath();
-          if (isPaper) {
-            ctx.moveTo(x, y - r); ctx.lineTo(x + r, y);
-            ctx.lineTo(x, y + r); ctx.lineTo(x - r, y);
-            ctx.closePath();
-          } else {
-            ctx.arc(x, y, r, 0, Math.PI * 2);
-          }
+          ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
 
           /* label */
           if (n.label) {
-            const fs = isPaper ? (10.5 + (isHover ? 1 : 0)) : (14 + (isHover ? 1.5 : 0));
+            const fs = 14 + (isHover ? 1.5 : 0);
             const weight = (isHover || isPinned) ? '500' : '400';
-            ctx.font = isPaper
-              ? `${weight} ${fs}px 'JetBrains Mono', monospace`
-              : `italic ${weight} ${fs}px Fraunces, serif`;
+            ctx.font = `italic ${weight} ${fs}px Fraunces, serif`;
             ctx.fillStyle = (isHover || isPinned) ? COLORS.labelHot : COLORS.label;
 
             if (n.labelLeft) {
@@ -3758,12 +3888,110 @@
               ctx.fillText(n.label, x + r + 8, y + 4);
             }
           }
-
-          ctx.globalAlpha = 1;
         }
 
         requestAnimationFrame(tick);
       }
+
+      /* ===== Hover side-panel (keywords mode) ===== */
+      const hoverPanel = document.getElementById('gc-hover-panel');
+
+      function updateHoverPanel() {
+        if (!hoverPanel) return;
+        if (card.dataset.view !== 'keywords' || pinnedIdx >= 0) {
+          hoverPanel.classList.remove('show');
+          return;
+        }
+        if (hoverIdx < 0) {
+          hoverPanel.classList.remove('show');
+          return;
+        }
+        const n = nodes[hoverIdx];
+        if (!n || !n.papers || !n.papers.length) {
+          hoverPanel.classList.remove('show');
+          return;
+        }
+        const items = n.papers.map(pid => {
+          const p = PAPERS[pid];
+          if (!p) return '';
+          return `<span class="ghp-item">
+            <span class="ghp-venue">${p.venue}</span>
+            <span class="ghp-title">${p.short}</span>
+          </span>`;
+        }).join('');
+        hoverPanel.innerHTML = `
+          <div class="ghp-label">keyword</div>
+          <div class="ghp-word">${n.label}</div>
+          ${items}
+        `;
+        hoverPanel.classList.add('show');
+      }
+
+      /* ===== Papers mode: chronological list ===== */
+      const papersList = document.getElementById('gc-papers-list');
+
+      function renderPapersList() {
+        if (!papersList) return;
+        const arr = Object.values(PAPERS).slice();
+        arr.sort((a, b) => (b.year || 0) - (a.year || 0));
+        const byYear = new Map();
+        for (const p of arr) {
+          const y = p.year || '—';
+          if (!byYear.has(y)) byYear.set(y, []);
+          byYear.get(y).push(p);
+        }
+        const html = Array.from(byYear.entries()).map(([y, list]) => `
+          <div class="gpl-year">
+            <div class="gpl-yr">${y}</div>
+            <div class="gpl-items">
+              ${list.map(p => `
+                <button class="gpl-item" data-id="${p.id}">
+                  <span class="gpl-venue">${p.venue}</span>
+                  <span class="gpl-title">${p.title}</span>
+                  <span class="gpl-authors">${p.authors}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+        papersList.innerHTML = html;
+        papersList.querySelectorAll('.gpl-item').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const tabBtn = document.querySelector('.nav-item[data-tab="publications"]');
+            tabBtn.click();
+            setTimeout(() => {
+              const target = document.getElementById('pub-' + id);
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.style.transition = 'background-color .8s ease';
+                target.style.backgroundColor = 'rgba(96, 153, 148, 0.10)';
+                setTimeout(() => { target.style.backgroundColor = ''; }, 1600);
+              }
+            }, 350);
+          });
+        });
+      }
+      renderPapersList();
+
+      /* ===== Toggle: keywords / papers ===== */
+      const toggleBtns = document.querySelectorAll('.gc-tg-btn');
+      function setView(view) {
+        card.dataset.view = view;
+        toggleBtns.forEach(b => {
+          const active = b.dataset.view === view;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        if (view !== 'keywords') {
+          closePopup();
+          hoverPanel.classList.remove('show');
+        }
+      }
+      toggleBtns.forEach(b => {
+        b.addEventListener('click', () => setView(b.dataset.view));
+      });
+
       tick();
     })();
 
