@@ -3282,6 +3282,8 @@
       const card = canvas.parentElement;
       const ctx = canvas.getContext('2d');
       const popup = document.getElementById('paper-popup');
+      const hoverPanel = document.getElementById('gc-hover-panel');
+      const papersList = document.getElementById('gc-papers-list');
       let W = 0, H = 0, DPR = 1;
 
       const COLORS = {
@@ -3902,8 +3904,6 @@
       }
 
       /* ===== Hover side-panel (keywords mode) ===== */
-      const hoverPanel = document.getElementById('gc-hover-panel');
-
       function updateHoverPanel() {
         if (!hoverPanel) return;
         if (card.dataset.view !== 'keywords' || pinnedIdx >= 0) {
@@ -3936,8 +3936,6 @@
       }
 
       /* ===== Papers mode: chronological list ===== */
-      const papersList = document.getElementById('gc-papers-list');
-
       function renderPapersList() {
         if (!papersList) return;
         const arr = Object.values(PAPERS).slice();
