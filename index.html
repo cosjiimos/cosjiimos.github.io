@@ -360,52 +360,58 @@
       font-weight: 500;
     }
 
-    /* Toggle — pinned inside the graph card's top-left corner */
+    /* Toggle — pill-shaped, top-right of the graph card */
     .graph-card .gc-toggle {
       position: absolute;
       top: 14px;
-      left: 14px;
+      right: 14px;
       z-index: 3;
-      display: flex;
-      gap: 4px;
+      display: inline-flex;
+      align-items: stretch;
+      gap: 0;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(252, 252, 250, 0.82);
+      border: 1px solid var(--line);
+      box-shadow: 0 6px 18px -10px rgba(22, 22, 26, 0.18);
+      backdrop-filter: blur(6px);
       font-family: 'JetBrains Mono', monospace;
       font-size: 10.5px;
-      letter-spacing: .14em;
+      letter-spacing: .12em;
       text-transform: uppercase;
     }
 
     .graph-card .gc-tg-btn {
-      background: rgba(252, 252, 250, 0.78);
-      border: 1px solid var(--line);
-      border-radius: 2px;
+      background: transparent;
+      border: 0;
+      border-radius: 999px;
       color: var(--ink-muted);
-      padding: 5px 10px;
+      padding: 5px 14px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      transition: color .18s ease, border-color .18s ease, background .18s ease;
-      backdrop-filter: blur(2px);
+      transition: color .25s ease, background .25s ease;
     }
 
     .graph-card .gc-tg-btn:hover {
       color: var(--ink-soft);
-      border-color: var(--ink-muted);
     }
 
     .graph-card .gc-tg-btn.active {
-      color: var(--accent);
-      border-color: var(--accent);
-      background: rgba(96, 153, 148, 0.10);
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04) inset;
     }
 
     .graph-card .gc-tg-btn .gc-tg-num {
       color: var(--ink-muted);
       font-size: 9px;
+      opacity: .8;
     }
 
     .graph-card .gc-tg-btn.active .gc-tg-num {
-      color: var(--accent);
+      color: rgba(255, 255, 255, 0.78);
     }
 
     /* Home graph card */
@@ -455,7 +461,7 @@
     .graph-card .gc-hint {
       position: absolute;
       bottom: 18px;
-      right: 22px;
+      left: 22px;
       z-index: 2;
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
@@ -3765,7 +3771,8 @@
         ctx.clearRect(0, 0, W, H);
         const activeIdx = pinnedIdx >= 0 ? pinnedIdx : hoverIdx;
 
-        for (const n of nodes) {
+        for (let i = 0; i < nodes.length; i++) {
+          const n = nodes[i];
           n.x += n.vx;
           n.y += n.vy;
 
@@ -3773,7 +3780,22 @@
           n.vx += breathe * 0.0018 * (Math.random() - 0.5);
           n.vy += breathe * 0.0018 * (Math.random() - 0.5);
 
-          n.vx *= 0.985; n.vy *= 0.985;
+          /* gentle pairwise force: spring at long range, repulse at short range */
+          for (let j = 0; j < nodes.length; j++) {
+            if (j === i) continue;
+            const m = nodes[j];
+            const dx = m.x - n.x, dy = m.y - n.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < 9 || d2 > 90000) continue;
+            const d = Math.sqrt(d2);
+            const ideal = 150;
+            /* small attractive pull when far, soft push when close */
+            const k = (d - ideal) * 0.00018;
+            n.vx += (dx / d) * k;
+            n.vy += (dy / d) * k;
+          }
+
+          n.vx *= 0.965; n.vy *= 0.965;
 
           const pad = 24;
           if (n.x < pad) { n.x = pad; n.vx *= -1; }
@@ -3804,6 +3826,50 @@
         /* if a popup is pinned, follow its node */
         if (pinnedIdx >= 0 && nodes[pinnedIdx]) {
           positionPopup(pinnedIdx);
+        }
+
+        /* ----- ASCII dot grid: constantly rippling, denser near cursor ----- */
+        {
+          const STEP = 22;          /* grid spacing */
+          ctx.font = `9px 'JetBrains Mono', monospace`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          for (let gy = STEP / 2; gy < H; gy += STEP) {
+            for (let gx = STEP / 2; gx < W; gx += STEP) {
+              /* organic motion: layered sin waves with phase shift per cell */
+              const phase = (gx * 0.025) + (gy * 0.031);
+              const wob = Math.sin(t * 1.3 + phase) * Math.cos(t * 0.7 + phase * 0.5);
+              const oy = wob * 3.2;
+              const ox = Math.cos(t * 1.1 + phase) * 2.0;
+
+              /* mouse proximity: amplify wobble + change glyph + brighten */
+              let near = 0;
+              if (mouse.active) {
+                const dx = gx - mouse.x;
+                const dy = gy - mouse.y;
+                const d2 = dx * dx + dy * dy;
+                const R = 130;
+                if (d2 < R * R) near = 1 - Math.sqrt(d2) / R;
+              }
+
+              const totalOx = ox + (Math.cos(t * 2.4 + phase) * near * 6);
+              const totalOy = oy + (Math.sin(t * 2.4 + phase) * near * 6);
+
+              /* alpha + glyph picked from wobble + near */
+              const a = 0.10 + Math.abs(wob) * 0.10 + near * 0.35;
+              ctx.fillStyle = near > 0
+                ? `rgba(96, 153, 148, ${a.toFixed(3)})`
+                : `rgba(74, 74, 82, ${a.toFixed(3)})`;
+
+              const glyphs = near > 0.5 ? '*+·' : (near > 0.15 ? '·+·' : '·');
+              const idx = (Math.floor(t * 3 + phase * 2) >> 0) % glyphs.length;
+              const g = glyphs[(idx + glyphs.length) % glyphs.length];
+
+              ctx.fillText(g, gx + totalOx, gy + totalOy);
+            }
+          }
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'alphabetic';
         }
 
         /* edges */
