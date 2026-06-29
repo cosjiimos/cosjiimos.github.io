@@ -398,66 +398,12 @@
       font-weight: 500;
     }
 
-    /* Toggle — pill-shaped, top-right of the graph card */
-    .graph-card .gc-toggle {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      z-index: 3;
-      display: inline-flex;
-      align-items: stretch;
-      gap: 0;
-      padding: 3px;
-      border-radius: 999px;
-      background: rgba(252, 252, 250, 0.82);
-      border: 1px solid var(--line);
-      box-shadow: 0 6px 18px -10px rgba(22, 22, 26, 0.18);
-      backdrop-filter: blur(6px);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10.5px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .graph-card .gc-tg-btn {
-      background: transparent;
-      border: 0;
-      border-radius: 999px;
-      color: var(--ink-muted);
-      padding: 5px 14px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: color .25s ease, background .25s ease;
-    }
-
-    .graph-card .gc-tg-btn:hover {
-      color: var(--ink-soft);
-    }
-
-    .graph-card .gc-tg-btn.active {
-      color: #fff;
-      background: var(--accent);
-      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04) inset;
-    }
-
-    .graph-card .gc-tg-btn .gc-tg-num {
-      color: var(--ink-muted);
-      font-size: 9px;
-      opacity: .8;
-    }
-
-    .graph-card .gc-tg-btn.active .gc-tg-num {
-      color: rgba(255, 255, 255, 0.78);
-    }
-
     /* Home graph card */
     .graph-card {
       position: relative;
       width: 100%;
-      aspect-ratio: 2 / 1;
-      max-height: 400px;
+      aspect-ratio: 5 / 3;
+      max-height: 520px;
       background:
         radial-gradient(ellipse 36% 68% at 50% 50%,
           rgba(96, 153, 148, 0.32) 0%,
@@ -586,229 +532,6 @@
       font-style: italic;
       color: var(--accent);
     }
-
-    /* Papers mode: chronological list replacing the canvas */
-    .graph-card[data-view="papers"] canvas,
-    .graph-card[data-view="papers"] .gc-hint,
-    .graph-card[data-view="papers"] .gc-hover-panel,
-    .graph-card[data-view="papers"] .paper-popup {
-      display: none !important;
-    }
-
-    .graph-card[data-view="papers"] {
-      aspect-ratio: auto;
-      max-height: none;
-      padding: 56px 26px 22px;
-    }
-
-    .graph-card .gc-papers-list {
-      display: none;
-      position: relative;
-      z-index: 2;
-    }
-
-    .graph-card[data-view="papers"] .gc-papers-list {
-      display: block;
-    }
-
-    /* In keywords mode, the papers-list element exists but stays hidden */
-    .graph-card[data-view="keywords"] .gc-papers-list {
-      display: none;
-    }
-
-    /* Header above the 4 cards */
-    .gc-papers-list .gpl-head {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      padding: 6px 4px 18px;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 18px;
-    }
-
-    .gc-papers-list .gpl-head-num {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      color: var(--accent);
-      letter-spacing: .2em;
-    }
-
-    .gc-papers-list .gpl-head-label {
-      font-family: 'Fraunces', serif;
-      font-style: italic;
-      font-size: 18px;
-      color: var(--ink);
-    }
-
-    .gc-papers-list .gpl-head-hint {
-      margin-left: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--ink-muted);
-    }
-
-    /* Two-column layout: list on the left, theme network on the right */
-    .gc-papers-list .gpl-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-      gap: 28px;
-      align-items: start;
-    }
-
-    .gc-papers-list .gpl-list {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .gc-papers-list .gpl-row {
-      padding: 14px 4px;
-      cursor: pointer;
-      border-top: 1px solid var(--line-soft);
-      transition: padding .2s ease, background .2s ease;
-      animation: gplFade .4s ease both;
-      animation-delay: calc(var(--i) * 70ms);
-    }
-
-    .gc-papers-list .gpl-row:first-child {
-      border-top: 0;
-    }
-
-    @keyframes gplFade {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .gc-papers-list .gpl-row:hover,
-    .gc-papers-list .gpl-row.hot {
-      background: rgba(96, 153, 148, 0.06);
-      padding-left: 10px;
-      padding-right: 10px;
-    }
-
-    .gc-papers-list .gpl-row-meta {
-      display: flex;
-      gap: 12px;
-      align-items: baseline;
-      margin-bottom: 6px;
-    }
-
-    .gc-papers-list .gpl-row-idx {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
-      letter-spacing: .18em;
-      color: var(--ink-muted);
-    }
-
-    .gc-papers-list .gpl-row-venue {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-
-    .gc-papers-list .gpl-row-title {
-      font-family: 'Fraunces', serif;
-      font-size: 16px;
-      line-height: 1.3;
-      color: var(--ink);
-      margin: 0 0 4px;
-    }
-
-    .gc-papers-list .gpl-row.hot .gpl-row-title em,
-    .gc-papers-list .gpl-row:hover .gpl-row-title em {
-      color: var(--accent);
-    }
-
-    .gc-papers-list .gpl-row-title em {
-      font-style: italic;
-      color: var(--accent);
-    }
-
-    .gc-papers-list .gpl-row-authors {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      color: var(--ink-muted);
-      line-height: 1.4;
-    }
-
-    .gc-papers-list .gpl-row-authors b {
-      color: var(--ink-soft);
-      font-weight: 500;
-    }
-
-    /* Right column: the shared theme network */
-    .gc-papers-list .gpl-network {
-      position: sticky;
-      top: 12px;
-      border: 1px solid var(--line-soft);
-      border-radius: 4px;
-      padding: 12px 14px 18px;
-      background: linear-gradient(180deg, rgba(96, 153, 148, 0.04), rgba(124, 119, 155, 0.04));
-    }
-
-    .gc-papers-list .gpl-net-head {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .gc-papers-list .gpl-net-label {
-      font-family: 'Fraunces', serif;
-      font-style: italic;
-      font-size: 15px;
-      color: var(--ink);
-    }
-
-    .gc-papers-list .gpl-net-hint {
-      margin-left: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--ink-muted);
-    }
-
-    .gc-papers-list .gpl-net-canvas {
-      width: 100%;
-      height: 380px;
-      display: block;
-      border-radius: 3px;
-    }
-
-    .gc-papers-list .gpl-net-readout {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px dashed var(--line);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--ink-muted);
-      min-height: 18px;
-    }
-
-    .gc-papers-list .gpl-net-readout-label {
-      color: var(--ink-muted);
-      transition: color .25s ease;
-    }
-
-    @media (max-width: 760px) {
-      .gc-papers-list .gpl-layout {
-        grid-template-columns: 1fr;
-      }
-      .gc-papers-list .gpl-network {
-        position: static;
-      }
-    }
-
 
     .graph-card .gc-hint::before {
       content: "";
@@ -2339,20 +2062,11 @@
           </div>
         </div>
 
-        <div class="graph-card" data-view="keywords">
-          <div class="gc-toggle" role="tablist" aria-label="Publications view">
-            <button class="gc-tg-btn active" data-view="keywords" role="tab" aria-selected="true">
-              <span class="gc-tg-num">01</span> keywords
-            </button>
-            <button class="gc-tg-btn" data-view="papers" role="tab" aria-selected="false">
-              <span class="gc-tg-num">02</span> selected publications
-            </button>
-          </div>
+        <div class="graph-card">
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
           <div class="gc-hint">hover keywords · click to pin</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
           <div class="gc-hover-panel" id="gc-hover-panel" aria-hidden="true"></div>
-          <div class="gc-papers-list" id="gc-papers-list" aria-hidden="true"></div>
         </div>
 
       </section>
@@ -3442,7 +3156,6 @@
       const ctx = canvas.getContext('2d');
       const popup = document.getElementById('paper-popup');
       const hoverPanel = document.getElementById('gc-hover-panel');
-      const papersList = document.getElementById('gc-papers-list');
       let W = 0, H = 0, DPR = 1;
 
       const COLORS = {
@@ -3941,9 +3654,14 @@
           n.x += n.vx;
           n.y += n.vy;
 
-          const breathe = Math.sin(t + n.phase) * 0.4;
-          n.vx += breathe * 0.0018 * (Math.random() - 0.5);
-          n.vy += breathe * 0.0018 * (Math.random() - 0.5);
+          /* layered wobble — keeps every node drifting forever */
+          const wob1 = Math.sin(t * 0.9 + n.phase);
+          const wob2 = Math.cos(t * 1.3 + n.phase * 0.7);
+          n.vx += wob1 * 0.012;
+          n.vy += wob2 * 0.012;
+          /* small random jitter so motion never settles into a clean cycle */
+          n.vx += (Math.random() - 0.5) * 0.025;
+          n.vy += (Math.random() - 0.5) * 0.025;
 
           /* soft mutual repulsion only — keeps the field spread out, no convergence */
           for (let j = 0; j < nodes.length; j++) {
@@ -3958,7 +3676,10 @@
             n.vy += (dy / d) * push;
           }
 
-          n.vx *= 0.975; n.vy *= 0.975;
+          n.vx *= 0.985; n.vy *= 0.985;
+          /* speed cap so the wobble stays graceful, not jittery */
+          const sp = Math.hypot(n.vx, n.vy);
+          if (sp > 1.1) { n.vx = (n.vx / sp) * 1.1; n.vy = (n.vy / sp) * 1.1; }
 
           const pad = 24;
           if (n.x < pad) { n.x = pad; n.vx *= -1; }
@@ -4119,312 +3840,6 @@
         `;
         hoverPanel.classList.add('show');
       }
-
-      /* ===== Selected Publications mode: list + ASCII keyword field ===== */
-      function jumpToPublication(id) {
-        const tabBtn = document.querySelector('.nav-item[data-tab="publications"]');
-        if (!tabBtn) return;
-        tabBtn.click();
-        setTimeout(() => {
-          const target = document.getElementById('pub-' + id);
-          if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            target.style.transition = 'background-color .8s ease';
-            target.style.backgroundColor = 'rgba(96, 153, 148, 0.10)';
-            setTimeout(() => { target.style.backgroundColor = ''; }, 1600);
-          }
-        }, 350);
-      }
-
-      function renderPapersList() {
-        if (!papersList) return;
-        const selected = Object.values(PAPERS).filter(p => p.selected);
-        selected.sort((a, b) => (b.year || 0) - (a.year || 0));
-
-        papersList.innerHTML = `
-          <div class="gpl-head">
-            <span class="gpl-head-num">04</span>
-            <span class="gpl-head-label">Selected Publications</span>
-            <span class="gpl-head-hint">hover a paper · click to open</span>
-          </div>
-          <div class="gpl-layout">
-            <div class="gpl-list">
-              ${selected.map((p, i) => `
-                <article class="gpl-row" data-id="${p.id}" style="--i:${i}">
-                  <div class="gpl-row-meta">
-                    <span class="gpl-row-idx">/ ${String(i + 1).padStart(2, '0')}</span>
-                    <span class="gpl-row-venue">${p.venue}</span>
-                  </div>
-                  <h3 class="gpl-row-title">${p.title}</h3>
-                  <div class="gpl-row-authors">${p.authors}</div>
-                </article>
-              `).join('')}
-            </div>
-            <aside class="gpl-network">
-              <div class="gpl-net-head">
-                <span class="gpl-net-label">keyword field</span>
-                <span class="gpl-net-hint">hover a paper to summon</span>
-              </div>
-              <canvas class="gpl-net-canvas" aria-hidden="true"></canvas>
-              <div class="gpl-net-readout">
-                <span class="gpl-net-readout-label">·</span>
-                <span class="gpl-net-readout-text">4 papers · drifting</span>
-              </div>
-            </aside>
-          </div>
-        `;
-
-        initKeywordField(selected);
-
-        /* row click → jump; row hover → focus field on that paper */
-        papersList.querySelectorAll('.gpl-row').forEach(row => {
-          row.addEventListener('click', () => jumpToPublication(row.dataset.id));
-          row.addEventListener('mouseenter', () => focusPaper(row.dataset.id));
-          row.addEventListener('mouseleave', () => focusPaper(null));
-        });
-      }
-
-      /* ===== ASCII keyword field (canvas) ===== */
-      let kwState = null;
-
-      function initKeywordField(papers) {
-        const canvas = papersList && papersList.querySelector('.gpl-net-canvas');
-        const readout = papersList && papersList.querySelector('.gpl-net-readout-text');
-        const readoutLabel = papersList && papersList.querySelector('.gpl-net-readout-label');
-        if (!canvas) return;
-        const c = canvas.getContext('2d');
-
-        /* build flat keyword list with owner-paper for each */
-        const items = [];
-        const colorByPaper = {};
-        const palette = [
-          'rgba(96, 153, 148, ALPHA)',   /* accent mint */
-          'rgba(124, 119, 155, ALPHA)',  /* accent-2 lavender */
-          'rgba(127, 131, 84, ALPHA)',   /* accent-3 olive */
-          'rgba(74, 74, 82, ALPHA)',     /* soft ink */
-        ];
-        papers.forEach((p, i) => {
-          colorByPaper[p.id] = palette[i % palette.length];
-          (p.kws || []).forEach(k => {
-            items.push({
-              paper: p.id,
-              label: k,
-              phase: Math.random() * Math.PI * 2,
-              vphase: 0.6 + Math.random() * 0.9,
-              jitter: Math.random() * 0.6 + 0.4,
-              homeAngle: Math.random() * Math.PI * 2,
-              x: 0, y: 0, tx: 0, ty: 0,
-            });
-          });
-        });
-
-        kwState = {
-          canvas, c, items, papers,
-          colorByPaper,
-          focusId: null,
-          W: 0, H: 0, DPR: 1,
-          t: 0,
-          readout, readoutLabel,
-          running: false,
-        };
-
-        const ro = new ResizeObserver(layout);
-        ro.observe(canvas);
-        canvas.addEventListener('relayout', layout);
-        layout();
-        if (!kwState.running) { kwState.running = true; requestAnimationFrame(tickKW); }
-
-        function layout() {
-          const rect = canvas.getBoundingClientRect();
-          if (rect.width < 8 || rect.height < 8) return;     /* wait until laid out */
-          const DPR = Math.min(window.devicePixelRatio || 1, 2);
-          kwState.DPR = DPR;
-          kwState.W = rect.width;
-          kwState.H = rect.height;
-          canvas.width  = rect.width * DPR;
-          canvas.height = rect.height * DPR;
-          canvas.style.width  = rect.width + 'px';
-          canvas.style.height = rect.height + 'px';
-          c.setTransform(DPR, 0, 0, DPR, 0, 0);
-          placeHomes();
-        }
-
-        function placeHomes() {
-          /* default drifting layout: random scattered home positions */
-          const { W, H, items } = kwState;
-          const padX = 30, padY = 26;
-          for (let i = 0; i < items.length; i++) {
-            const it = items[i];
-            const t = (items.length === 1) ? 0.5 : i / (items.length - 1);
-            /* arrange by paper: group on a soft arc per paper */
-            const paperIdx = papers.findIndex(p => p.id === it.paper);
-            const groupT = (paperIdx + 0.5) / Math.max(1, papers.length);
-            const baseY = padY + groupT * (H - padY * 2);
-            const baseX = padX + (i % 6) * ((W - padX * 2) / 6);
-            it.hx = baseX + (Math.random() * 24 - 12);
-            it.hy = baseY + (Math.random() * 30 - 15);
-            it.x = it.hx;
-            it.y = it.hy;
-          }
-        }
-      }
-
-      function focusPaper(id) {
-        if (!kwState) return;
-        kwState.focusId = id;
-        if (papersList) papersList.classList.toggle('has-hover', !!id);
-        if (kwState.readout && kwState.readoutLabel) {
-          if (id) {
-            const p = PAPERS[id];
-            kwState.readoutLabel.textContent = (p.venue.split('·')[0] || p.venue).trim();
-            kwState.readoutLabel.style.color = 'var(--accent)';
-            kwState.readout.textContent = `${(p.kws || []).length} keywords · summoning`;
-          } else {
-            kwState.readoutLabel.textContent = '·';
-            kwState.readoutLabel.style.color = 'var(--ink-muted)';
-            kwState.readout.textContent = `${kwState.papers.length} papers · drifting`;
-          }
-        }
-        /* highlight matching row */
-        if (papersList) {
-          papersList.querySelectorAll('.gpl-row').forEach(r =>
-            r.classList.toggle('hot', !!id && r.dataset.id === id)
-          );
-        }
-      }
-
-      function tickKW() {
-        if (!kwState) return;
-        const { c, W, H, items, t } = kwState;
-        kwState.t = t + 0.012;
-        if (W < 8 || H < 8) { requestAnimationFrame(tickKW); return; }
-        const T = kwState.t;
-        c.clearRect(0, 0, W, H);
-
-        /* --- background ASCII noise field (uniform monospace dots that breathe) --- */
-        const STEP = 18;
-        c.font = `10px 'JetBrains Mono', monospace`;
-        c.textAlign = 'center';
-        c.textBaseline = 'middle';
-        for (let gy = STEP / 2; gy < H; gy += STEP) {
-          for (let gx = STEP / 2; gx < W; gx += STEP) {
-            const phase = gx * 0.022 + gy * 0.027;
-            const wob = Math.sin(T * 1.4 + phase) * Math.cos(T * 0.8 + phase * 0.5);
-            const focus = kwState.focusId ? 0.55 : 0.25;
-            const a = 0.06 + Math.abs(wob) * 0.05 + (kwState.focusId ? 0.04 : 0);
-            const ox = Math.cos(T * 1.1 + phase) * 1.6;
-            const oy = wob * 2.4;
-            const g = (Math.floor(T * 2 + phase) % 3 === 0) ? '·' : '·';
-            c.fillStyle = `rgba(74, 74, 82, ${a.toFixed(3)})`;
-            c.fillText(g, gx + ox, gy + oy);
-          }
-        }
-        c.textAlign = 'left';
-        c.textBaseline = 'alphabetic';
-
-        /* --- keyword nodes --- */
-        const focusId = kwState.focusId;
-        const focused = items.filter(it => focusId && it.paper === focusId);
-
-        /* if focusing, pull focused items into a centered loose cluster */
-        if (focusId) {
-          const cx = W * 0.5, cy = H * 0.5;
-          const R = Math.min(W, H) * 0.34;
-          focused.forEach((it, i) => {
-            const a = (i / Math.max(1, focused.length)) * Math.PI * 2 + T * 0.2;
-            it.tx = cx + Math.cos(a) * R * (0.55 + 0.45 * Math.sin(T + i));
-            it.ty = cy + Math.sin(a) * R * (0.55 + 0.45 * Math.cos(T + i));
-          });
-          for (const it of items) {
-            if (it.paper !== focusId) {
-              it.tx = it.hx;
-              it.ty = it.hy;
-            }
-          }
-        } else {
-          /* drifting: targets oscillate around home */
-          for (const it of items) {
-            it.tx = it.hx + Math.cos(T * it.vphase + it.phase) * 14 * it.jitter;
-            it.ty = it.hy + Math.sin(T * it.vphase * 0.8 + it.phase) * 12 * it.jitter;
-          }
-        }
-
-        /* ease toward target */
-        for (const it of items) {
-          it.x += (it.tx - it.x) * 0.06;
-          it.y += (it.ty - it.y) * 0.06;
-        }
-
-        /* connection lines between focused items */
-        if (focusId && focused.length > 1) {
-          for (let i = 0; i < focused.length; i++) {
-            for (let j = i + 1; j < focused.length; j++) {
-              const a = focused[i], b = focused[j];
-              const dx = a.x - b.x, dy = a.y - b.y;
-              const d2 = dx * dx + dy * dy;
-              const R = 220;
-              if (d2 < R * R) {
-                const alpha = 0.35 * (1 - Math.sqrt(d2) / R);
-                c.strokeStyle = `rgba(96, 153, 148, ${alpha.toFixed(3)})`;
-                c.lineWidth = 0.8;
-                c.beginPath();
-                c.moveTo(a.x, a.y);
-                c.lineTo(b.x, b.y);
-                c.stroke();
-              }
-            }
-          }
-        }
-
-        /* draw labels */
-        c.font = `italic 12.5px 'Fraunces', serif`;
-        for (const it of items) {
-          const isFocused = focusId && it.paper === focusId;
-          const dim = focusId && !isFocused;
-          const baseAlpha = dim ? 0.10 : (isFocused ? 0.95 : 0.55);
-          const tpl = kwState.colorByPaper[it.paper] || 'rgba(74, 74, 82, ALPHA)';
-          c.fillStyle = tpl.replace('ALPHA', baseAlpha.toFixed(3));
-          c.fillText(it.label, it.x, it.y);
-
-          /* glyph halo before/after the label, intensifies on focus */
-          c.font = `10px 'JetBrains Mono', monospace`;
-          const haloAlpha = isFocused ? 0.6 : (dim ? 0.05 : 0.18);
-          c.fillStyle = `rgba(96, 153, 148, ${haloAlpha.toFixed(3)})`;
-          const glyph = isFocused ? '+' : '·';
-          c.fillText(glyph, it.x - 10, it.y);
-          c.fillText(glyph, it.x + c.measureText(it.label).width + 2, it.y);
-          c.font = `italic 12.5px 'Fraunces', serif`;
-        }
-
-        requestAnimationFrame(tickKW);
-      }
-
-      renderPapersList();
-
-      /* ===== Toggle: keywords / papers ===== */
-      const toggleBtns = document.querySelectorAll('.gc-tg-btn');
-      function setView(view) {
-        card.dataset.view = view;
-        toggleBtns.forEach(b => {
-          const active = b.dataset.view === view;
-          b.classList.toggle('active', active);
-          b.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
-        if (view !== 'keywords') {
-          closePopup();
-          hoverPanel.classList.remove('show');
-        }
-        if (view === 'papers') {
-          /* canvas may have been hidden during init; force re-layout now that it's visible */
-          requestAnimationFrame(() => {
-            const cv = papersList && papersList.querySelector('.gpl-net-canvas');
-            if (cv) cv.dispatchEvent(new Event('relayout'));
-          });
-        }
-      }
-      toggleBtns.forEach(b => {
-        b.addEventListener('click', () => setView(b.dataset.view));
-      });
 
       tick();
     })();
