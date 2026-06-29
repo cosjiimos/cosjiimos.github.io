@@ -299,15 +299,21 @@
       z-index: 3;
     }
 
-    /* Full-area ASCII noise canvas — sits behind the main column content */
-    .main .bg-ascii {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
+    /* Full-area ASCII noise canvas — anchored to the viewport, right of the sidebar */
+    .bg-ascii {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 340px;
+      right: 0;
+      width: auto;
+      height: auto;
+      z-index: 1;
       pointer-events: none;
       display: block;
+    }
+    @media (max-width: 980px) {
+      .bg-ascii { left: 0; }
     }
 
     .panel {
@@ -446,12 +452,12 @@
       color: rgba(255, 255, 255, 0.78);
     }
 
-    /* Home graph card */
+    /* Home graph card — tall, fills most of the viewport */
     .graph-card {
       position: relative;
       width: 100%;
-      aspect-ratio: 2 / 1;
-      max-height: 400px;
+      height: calc(100vh - 140px);
+      min-height: 480px;
       background:
         radial-gradient(ellipse 36% 68% at 50% 50%,
           rgba(96, 153, 148, 0.32) 0%,
@@ -581,32 +587,7 @@
       color: var(--accent);
     }
 
-    /* Papers mode: chronological list replacing the canvas */
-    .graph-card[data-view="papers"] canvas,
-    .graph-card[data-view="papers"] .gc-hint,
-    .graph-card[data-view="papers"] .gc-hover-panel,
-    .graph-card[data-view="papers"] .paper-popup {
-      display: none !important;
-    }
-
-    .graph-card[data-view="papers"] {
-      aspect-ratio: auto;
-      max-height: none;
-      padding: 56px 26px 22px;
-    }
-
     .graph-card .gc-papers-list {
-      display: none;
-      position: relative;
-      z-index: 2;
-    }
-
-    .graph-card[data-view="papers"] .gc-papers-list {
-      display: block;
-    }
-
-    /* In keywords mode, the papers-list element exists but stays hidden */
-    .graph-card[data-view="keywords"] .gc-papers-list {
       display: none;
     }
 
@@ -2219,7 +2200,8 @@
       }
 
       .graph-card {
-        aspect-ratio: 4 / 5;
+        height: calc(100vh - 200px);
+        min-height: 420px;
       }
     }
   </style>
@@ -2279,9 +2261,9 @@
       </div>
     </aside>
 
-    <main class="main">
+    <canvas id="bg-ascii" class="bg-ascii" aria-hidden="true"></canvas>
 
-      <canvas class="bg-ascii" id="bg-ascii" aria-hidden="true"></canvas>
+    <main class="main">
 
       <section class="panel active" id="home">
 
@@ -2335,19 +2317,10 @@
         </div>
 
         <div class="graph-card" data-view="keywords">
-          <div class="gc-toggle" role="tablist" aria-label="Publications view">
-            <button class="gc-tg-btn active" data-view="keywords" role="tab" aria-selected="true">
-              <span class="gc-tg-num">01</span> keywords
-            </button>
-            <button class="gc-tg-btn" data-view="papers" role="tab" aria-selected="false">
-              <span class="gc-tg-num">02</span> selected publications
-            </button>
-          </div>
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
           <div class="gc-hint">hover keywords · click to pin</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
           <div class="gc-hover-panel" id="gc-hover-panel" aria-hidden="true"></div>
-          <div class="gc-papers-list" id="gc-papers-list" aria-hidden="true"></div>
         </div>
 
       </section>
@@ -4424,43 +4397,39 @@
       tick();
     })();
 
-    /* ---------------- GLOBAL ASCII BACKGROUND (behind .main column) ---------------- */
+    /* ---------------- GLOBAL ASCII BACKGROUND (viewport-fixed, right of sidebar) ---------------- */
     (() => {
       const canvas = document.getElementById('bg-ascii');
       if (!canvas) return;
       const c = canvas.getContext('2d');
-      const main = canvas.parentElement;
       let W = 0, H = 0, DPR = 1, t = 0;
       const mouse = { x: -9999, y: -9999, active: false };
 
       function layout() {
-        const rect = main.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         DPR = Math.min(window.devicePixelRatio || 1, 2);
         W = rect.width;
         H = rect.height;
         canvas.width = W * DPR;
         canvas.height = H * DPR;
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
         c.setTransform(DPR, 0, 0, DPR, 0, 0);
       }
 
-      const ro = new ResizeObserver(layout);
-      ro.observe(main);
-      window.addEventListener('scroll', layout, { passive: true });
       window.addEventListener('resize', layout);
       layout();
 
-      main.addEventListener('mousemove', (e) => {
-        const rect = main.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left;
-        mouse.y = e.clientY - rect.top;
-        mouse.active = true;
-      });
-      main.addEventListener('mouseleave', () => {
-        mouse.active = false;
-        mouse.x = -9999; mouse.y = -9999;
-      });
+      window.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+          mouse.active = false;
+          mouse.x = -9999; mouse.y = -9999;
+        } else {
+          mouse.x = x; mouse.y = y;
+          mouse.active = true;
+        }
+      }, { passive: true });
 
       function tick() {
         t += 0.008;
