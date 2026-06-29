@@ -611,21 +611,31 @@
       color: var(--ink-muted);
     }
 
-    /* Card grid */
-    .gc-papers-list .gpl-cards {
+    /* Two-column layout: list on the left, theme network on the right */
+    .gc-papers-list .gpl-layout {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
     }
 
-    .gc-papers-list .gpl-card {
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: rgba(252, 252, 250, 0.84);
-      padding: 14px 16px 16px;
-      transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    .gc-papers-list .gpl-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .gc-papers-list .gpl-row {
+      padding: 14px 4px;
+      cursor: pointer;
+      border-top: 1px solid var(--line-soft);
+      transition: padding .2s ease, background .2s ease;
       animation: gplFade .4s ease both;
-      animation-delay: calc(var(--i) * 60ms);
+      animation-delay: calc(var(--i) * 70ms);
+    }
+
+    .gc-papers-list .gpl-row:first-child {
+      border-top: 0;
     }
 
     @keyframes gplFade {
@@ -633,33 +643,28 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .gc-papers-list .gpl-card:hover {
-      border-color: var(--ink-muted);
-      box-shadow: 0 8px 24px -16px rgba(22, 22, 26, 0.18);
+    .gc-papers-list .gpl-row:hover,
+    .gc-papers-list .gpl-row.hot {
+      background: rgba(96, 153, 148, 0.06);
+      padding-left: 10px;
+      padding-right: 10px;
     }
 
-    .gc-papers-list .gpl-card.expanded {
-      border-color: var(--accent);
-      background: #fff;
-      box-shadow: 0 12px 36px -22px rgba(96, 153, 148, 0.35);
-    }
-
-    .gc-papers-list .gpl-card-head {
+    .gc-papers-list .gpl-row-meta {
       display: flex;
-      align-items: center;
       gap: 12px;
-      cursor: pointer;
-      user-select: none;
+      align-items: baseline;
+      margin-bottom: 6px;
     }
 
-    .gc-papers-list .gpl-card-idx {
+    .gc-papers-list .gpl-row-idx {
       font-family: 'JetBrains Mono', monospace;
       font-size: 9.5px;
       letter-spacing: .18em;
       color: var(--ink-muted);
     }
 
-    .gc-papers-list .gpl-card-venue {
+    .gc-papers-list .gpl-row-venue {
       font-family: 'JetBrains Mono', monospace;
       font-size: 9.5px;
       letter-spacing: .14em;
@@ -667,177 +672,62 @@
       color: var(--accent);
     }
 
-    .gc-papers-list .gpl-card-toggle {
-      margin-left: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      color: var(--ink-muted);
-      width: 22px;
-      height: 22px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--line);
-      border-radius: 50%;
-      transition: transform .25s ease, color .2s ease, border-color .2s ease;
-    }
-
-    .gc-papers-list .gpl-card.expanded .gpl-card-toggle {
-      color: var(--accent);
-      border-color: var(--accent);
-      transform: rotate(180deg);
-    }
-
-    .gc-papers-list .gpl-card-title {
+    .gc-papers-list .gpl-row-title {
       font-family: 'Fraunces', serif;
-      font-size: 17px;
-      line-height: 1.25;
+      font-size: 16px;
+      line-height: 1.3;
       color: var(--ink);
-      margin: 10px 0 6px;
+      margin: 0 0 4px;
     }
 
-    .gc-papers-list .gpl-card-title em {
+    .gc-papers-list .gpl-row.hot .gpl-row-title em,
+    .gc-papers-list .gpl-row:hover .gpl-row-title em {
+      color: var(--accent);
+    }
+
+    .gc-papers-list .gpl-row-title em {
       font-style: italic;
       color: var(--accent);
     }
 
-    .gc-papers-list .gpl-card-authors {
+    .gc-papers-list .gpl-row-authors {
       font-family: 'Inter', sans-serif;
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--ink-muted);
-      line-height: 1.45;
+      line-height: 1.4;
     }
 
-    .gc-papers-list .gpl-card-authors b {
+    .gc-papers-list .gpl-row-authors b {
       color: var(--ink-soft);
       font-weight: 500;
     }
 
-    /* Expandable body — animated reveal */
-    .gc-papers-list .gpl-card-body {
-      display: grid;
-      grid-template-rows: 0fr;
-      transition: grid-template-rows .35s ease, opacity .25s ease, margin-top .25s ease;
-      opacity: 0;
-      margin-top: 0;
-    }
-
-    .gc-papers-list .gpl-card.expanded .gpl-card-body {
-      grid-template-rows: 1fr;
-      opacity: 1;
-      margin-top: 12px;
-    }
-
-    .gc-papers-list .gpl-card-body > * {
-      min-height: 0;
-    }
-
-    .gc-papers-list .gpl-card-body {
-      overflow: hidden;
-    }
-
-    /* Mini concept-graph that lives inside an expanded card */
-    .gc-papers-list .gpl-mini {
-      position: relative;
-      margin: 4px 0 14px;
-      background: linear-gradient(180deg, rgba(96, 153, 148, 0.04), rgba(124, 119, 155, 0.04));
+    /* Right column: the shared theme network */
+    .gc-papers-list .gpl-network {
+      position: sticky;
+      top: 12px;
       border: 1px solid var(--line-soft);
       border-radius: 4px;
-      padding: 8px 10px 12px;
+      padding: 12px 14px 18px;
+      background: linear-gradient(180deg, rgba(96, 153, 148, 0.04), rgba(124, 119, 155, 0.04));
     }
 
-    .gc-papers-list .gpl-mini-svg {
-      width: 100%;
-      height: 220px;
-      display: block;
-      font-family: 'Fraunces', serif;
-    }
-
-    .gc-papers-list .gpl-mini-edge {
-      fill: none;
-      stroke: rgba(120, 115, 135, 0.32);
-      stroke-width: 1;
-      transition: stroke .2s ease, stroke-width .2s ease;
-    }
-
-    .gc-papers-list .gpl-mini-edge.hot {
-      stroke: var(--accent);
-      stroke-width: 1.6;
-    }
-
-    .gc-papers-list .gpl-mini-node {
-      cursor: pointer;
-      transition: opacity .2s ease;
-    }
-
-    .gc-papers-list .gpl-mini-node.dim {
-      opacity: 0.35;
-    }
-
-    .gc-papers-list .gpl-mini-halo {
-      fill: rgba(96, 153, 148, 0);
-      transition: fill .2s ease;
-    }
-
-    .gc-papers-list .gpl-mini-node.hot .gpl-mini-halo {
-      fill: rgba(96, 153, 148, 0.16);
-    }
-
-    .gc-papers-list .gpl-mini-dot {
-      transition: r .2s ease;
-    }
-
-    .gc-papers-list .gpl-mini-node.hot .gpl-mini-dot {
-      r: 7.5;
-    }
-
-    .gc-papers-list .gpl-mini-label {
-      font-style: italic;
-      font-size: 11px;
-      fill: var(--ink-soft);
-      pointer-events: none;
-      transition: fill .2s ease;
-    }
-
-    .gc-papers-list .gpl-mini-node.hot .gpl-mini-label {
-      fill: var(--ink);
-      font-weight: 500;
-    }
-
-    /* tooltip — sits at the bottom of the mini graph card */
-    .gc-papers-list .gpl-mini-tip {
-      min-height: 44px;
-      padding: 8px 10px;
-      border-top: 1px dashed var(--line);
-      margin-top: 4px;
+    .gc-papers-list .gpl-net-head {
       display: flex;
-      flex-direction: column;
-      gap: 3px;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
     }
 
-    .gc-papers-list .gpl-mini-tip-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 8.5px;
-      letter-spacing: .22em;
-      text-transform: uppercase;
-      color: var(--ink-muted);
-    }
-
-    .gc-papers-list .gpl-mini-tip-text {
+    .gc-papers-list .gpl-net-label {
       font-family: 'Fraunces', serif;
-      font-size: 13px;
-      color: var(--ink-soft);
-      line-height: 1.45;
-    }
-
-    .gc-papers-list .gpl-mini-tip.show .gpl-mini-tip-text {
+      font-style: italic;
+      font-size: 15px;
       color: var(--ink);
     }
 
-    .gc-papers-list .gpl-mini-legend {
-      display: flex;
-      gap: 14px;
-      margin-top: 6px;
+    .gc-papers-list .gpl-net-hint {
+      margin-left: auto;
       font-family: 'JetBrains Mono', monospace;
       font-size: 9px;
       letter-spacing: .14em;
@@ -845,58 +735,101 @@
       color: var(--ink-muted);
     }
 
-    .gc-papers-list .gpl-mini-legend i {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      margin-right: 5px;
-      vertical-align: middle;
-    }
-
-    .gc-papers-list .gpl-card-kws {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-bottom: 12px;
-    }
-
-    .gc-papers-list .gpl-card-kw {
+    .gc-papers-list .gpl-net-svg {
+      width: 100%;
+      height: 380px;
+      display: block;
       font-family: 'Fraunces', serif;
-      font-style: italic;
-      font-size: 11.5px;
-      color: var(--ink-soft);
-      padding: 2px 9px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--paper);
     }
 
-    .gc-papers-list .gpl-card-links {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
+    .gc-papers-list .gpl-net-edge {
+      fill: none;
+      stroke: rgba(120, 115, 135, 0.28);
+      stroke-width: 1;
+      transition: stroke .25s ease, stroke-width .25s ease, opacity .25s ease;
     }
 
-    .gc-papers-list .gpl-card-links a,
-    .gc-papers-list .gpl-card-jump {
-      color: var(--accent);
-      background: transparent;
-      border: 0;
-      padding: 0;
+    .gc-papers-list.has-hover .gpl-net-edge:not(.hot) {
+      opacity: 0.18;
+    }
+
+    .gc-papers-list .gpl-net-edge.hot {
+      stroke: var(--accent);
+      stroke-width: 1.8;
+    }
+
+    .gc-papers-list .gpl-net-paper,
+    .gc-papers-list .gpl-net-theme {
       cursor: pointer;
-      text-decoration: none;
+      transition: opacity .25s ease;
     }
 
-    .gc-papers-list .gpl-card-links a:hover,
-    .gc-papers-list .gpl-card-jump:hover {
-      color: var(--ink);
-      text-decoration: underline;
+    .gc-papers-list.has-hover .gpl-net-paper:not(.hot),
+    .gc-papers-list.has-hover .gpl-net-theme:not(.hot) {
+      opacity: 0.32;
     }
+
+    .gc-papers-list .gpl-net-halo {
+      fill: rgba(96, 153, 148, 0);
+      transition: fill .25s ease, r .25s ease;
+    }
+
+    .gc-papers-list .gpl-net-paper.hot .gpl-net-halo,
+    .gc-papers-list .gpl-net-theme.hot .gpl-net-halo {
+      fill: rgba(96, 153, 148, 0.18);
+    }
+
+    .gc-papers-list .gpl-net-dot {
+      fill: var(--accent-2);
+      transition: fill .25s ease, r .25s ease;
+    }
+
+    .gc-papers-list .gpl-net-paper.hot .gpl-net-dot {
+      fill: var(--accent);
+    }
+
+    .gc-papers-list .gpl-net-theme-dot {
+      fill: var(--accent);
+      transition: fill .25s ease, r .25s ease;
+    }
+
+    .gc-papers-list .gpl-net-paper-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-style: normal;
+      font-size: 9.5px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      fill: var(--ink-muted);
+      pointer-events: none;
+      transition: fill .25s ease;
+    }
+
+    .gc-papers-list .gpl-net-paper.hot .gpl-net-paper-label {
+      fill: var(--accent);
+    }
+
+    .gc-papers-list .gpl-net-theme-label {
+      font-style: italic;
+      font-size: 12px;
+      fill: var(--ink-soft);
+      pointer-events: none;
+      transition: fill .25s ease, font-weight .25s ease;
+    }
+
+    .gc-papers-list .gpl-net-theme.hot .gpl-net-theme-label {
+      fill: var(--ink);
+      font-weight: 500;
+    }
+
+    @media (max-width: 760px) {
+      .gc-papers-list .gpl-layout {
+        grid-template-columns: 1fr;
+      }
+      .gc-papers-list .gpl-network {
+        position: static;
+      }
+    }
+
 
     .graph-card .gc-hint::before {
       content: "";
@@ -3563,25 +3496,8 @@
           authors: '<b>Jiin Choi</b>, Seung Won Lee, Kyung Hoon Hyun',
           doi: 'https://doi.org/10.1145/3706598.3713487',
           selected: true,
+          themes: ['genai', 'design-space', 'interface'],
           kws: ['3D Generative AI', 'Design Space', 'LLMs', 'Bayesian Inference', 'Human-AI Interaction'],
-          concept_graph: {
-            nodes: [
-              { id: 'text-gap', label: 'text-only gap', group: 'motivation', sentence: 'In 3D design, specifying design objectives and visualizing complex shapes through text alone proves to be a significant challenge.' },
-              { id: 'shape-params', label: 'shape parameters', group: 'method', sentence: 'GenPara leverages text-conditional shape parameters of part-aware 3D designs.' },
-              { id: 'expl-map', label: 'Exploration Map', group: 'method', sentence: 'GenPara visualizes the design space within the Exploration Map and Design Versioning Tree.' },
-              { id: 'roi', label: 'regions of interest', group: 'method', sentence: "Among shape parameters generated by an LLM, the system extracts outcomes within the user's regions of interest based on Bayesian inference." },
-              { id: 'study', label: 'user study (N = 16)', group: 'finding', sentence: 'A user study (N = 16) revealed that GenPara enhanced designers\' comprehension and management of text-conditional shape parameters.' },
-              { id: 'creativity', label: 'efficiency & creativity', group: 'finding', sentence: 'GenPara streamlined design exploration and concretization, boosting efficiency and creativity of the 3D design process.' },
-            ],
-            edges: [
-              ['text-gap', 'shape-params'],
-              ['shape-params', 'expl-map'],
-              ['shape-params', 'roi'],
-              ['expl-map', 'study'],
-              ['roi', 'study'],
-              ['study', 'creativity'],
-            ],
-          },
         },
         cmlsearch: {
           id: 'cmlsearch',
@@ -3601,25 +3517,8 @@
           authors: '<b>Jiin Choi</b>†, Yugyeong Jang†, Kyung Hoon Hyun',
           doi: 'https://www.researchgate.net/publication/390114821',
           selected: true,
+          themes: ['genai', 'workflow', 'interface'],
           kws: ['AI-assisted CAD', 'Multimodal UX', '3D Modeling Workflow', 'Industrial Design', 'HCI'],
-          concept_graph: {
-            nodes: [
-              { id: 'potential', label: 'workflow potential', group: 'motivation', sentence: 'AI-driven multimodal interfaces have the potential to revolutionize industrial 3D CAD modeling by improving workflow efficiency and user experience.' },
-              { id: 'barriers', label: 'integration barriers', group: 'motivation', sentence: 'Integration remains challenging due to software constraints, user adoption barriers, and limitations in AI model adaptability.' },
-              { id: 'bayes', label: 'Bayesian inference', group: 'method', sentence: 'We analyze Bayesian workflow inference as one strategy for adapting AI assistance to CAD use.' },
-              { id: 'multimodal', label: 'multimodal input', group: 'method', sentence: 'We examine multimodal input strategies — combining sketch, language, and direct manipulation — within CAD environments.' },
-              { id: 'collab', label: 'collaborative interface', group: 'method', sentence: 'We discuss collaborative AI-driven interfaces that share authoring control between designer and model.' },
-              { id: 'usability', label: 'industrial usability', group: 'finding', sentence: 'We identify areas where AI can enhance CAD design processes while addressing usability concerns in industrial manufacturing settings.' },
-            ],
-            edges: [
-              ['potential', 'multimodal'],
-              ['potential', 'bayes'],
-              ['barriers', 'usability'],
-              ['multimodal', 'collab'],
-              ['bayes', 'collab'],
-              ['collab', 'usability'],
-            ],
-          },
         },
         typeface: {
           id: 'typeface',
@@ -3648,27 +3547,8 @@
           authors: 'Yejin Yun†, Seung Won Lee†, <b>Jiin Choi†</b>, Kyung Hoon Hyun',
           doi: 'https://dl.acm.org/doi/pdf/10.1145/3772363.3799044',
           selected: true,
+          themes: ['genai', 'workflow', 'interface'],
           kws: ['Infinite Canvas', 'Sequential Action Analysis', 'Deployment Study', 'Agentic AI'],
-          concept_graph: {
-            nodes: [
-              { id: 'externalization', label: 'externalization', group: 'motivation', sentence: 'Infinite canvas platforms enable designers to externalize cognition through the spatial arrangement of multimodal artifacts.' },
-              { id: 'agent', label: 'AI organizing agent', group: 'motivation', sentence: 'As AI agents increasingly generate and organize content within these environments, their impact on externalization processes remains underexplored.' },
-              { id: 'field-study', label: 'field study (N = 8)', group: 'method', sentence: 'We report a field study with eight professional designers comparing workflows with and without an AI organizing agent.' },
-              { id: 'seq', label: '5,838 actions', group: 'method', sentence: 'A sequence analysis of 5,838 design actions surfaces shifts in how cognition is allocated.' },
-              { id: 'reallocate', label: 'cognitive reallocation', group: 'finding', sentence: 'AI integration reallocates cognitive effort from spatial management to content curation and relational structuring, without increasing active time.' },
-              { id: 'gen-curate', label: 'generate-and-curate', group: 'finding', sentence: 'A characteristic generate-and-curate cycle emerges in which designers\' demands on the agent intensify while the agent\'s functional role adapts.' },
-              { id: 'phases', label: 'divergent → convergent', group: 'finding', sentence: "AI's role evolves from a divergent catalyst in early stages to a convergent curator in later phases." },
-            ],
-            edges: [
-              ['externalization', 'agent'],
-              ['agent', 'field-study'],
-              ['field-study', 'seq'],
-              ['seq', 'reallocate'],
-              ['seq', 'gen-curate'],
-              ['seq', 'phases'],
-              ['gen-curate', 'phases'],
-            ],
-          },
         },
         workflownet: {
           id: 'workflownet',
@@ -3679,28 +3559,8 @@
           authors: 'Tae Hee Jo†, <b>Jiin Choi†</b>, Semin Jin, Seung Won Lee, Yugyeong Jang, Sang Woon Park, Seonghoon Ban, Kyung Hoon Hyun',
           doi: 'http://dx.doi.org/10.15187/adr.2026.05.39.2.7',
           selected: true,
+          themes: ['genai', 'workflow', 'design-space', 'interface'],
           kws: ['Design Research', 'Designer Workflow', 'Design Process Analysis', 'Interface Framework', 'Node-based Interface', 'Generative AI'],
-          concept_graph: {
-            nodes: [
-              { id: 'gap', label: 'workflow gap', group: 'motivation', sentence: "How GenAI-driven design support interface frameworks shape designers' workflows remains underexplored." },
-              { id: 'three-int', label: 'three interfaces', group: 'method', sentence: 'We formalized and compared three GenAI-driven interfaces: Agentic Prompt-Based (AB), Programming Node-Based (PB), and Creative Node-Based (CB).' },
-              { id: 'wf-net', label: 'Workflow-Net', group: 'method', sentence: 'Workflow-Net uses LLMs to cluster structured protocol data by semantic intent and aggregates individual workflows into a weighted directed graph.' },
-              { id: 'study', label: 'user study (N = 9)', group: 'method', sentence: 'A within-subject user study with nine designers performing three distinct tasks across all three interfaces captured cross-interface behavioral patterns.' },
-              { id: 'ab', label: 'AB · ideation, limited refinement', group: 'finding', sentence: 'AB supported initial ideation but limited refinement due to text abstraction gaps and a lack of iterative detail control.' },
-              { id: 'pb', label: 'PB · precise but rigid', group: 'finding', sentence: 'PB offered precision and granular control but enforced rigid linearity, extreme convergence, and the highest cognitive load.' },
-              { id: 'cb', label: 'CB · balanced', group: 'finding', sentence: 'CB best supported the creative process by balancing exploration with refinement through automated process traceability.' },
-            ],
-            edges: [
-              ['gap', 'three-int'],
-              ['three-int', 'wf-net'],
-              ['wf-net', 'study'],
-              ['study', 'ab'],
-              ['study', 'pb'],
-              ['study', 'cb'],
-              ['ab', 'cb'],
-              ['pb', 'cb'],
-            ],
-          },
         },
       };
 
@@ -4324,195 +4184,216 @@
         hoverPanel.classList.add('show');
       }
 
-      /* ===== Mini concept-graph renderer (used inside each expanded card) ===== */
-      function drawMiniGraph(host, paper) {
-        if (!host || !paper || !paper.concept_graph) return;
-        const svg = host.querySelector('.gpl-mini-svg');
-        const tip = host.querySelector('.gpl-mini-tip');
-        const tipLabel = tip.querySelector('.gpl-mini-tip-label');
-        const tipText = tip.querySelector('.gpl-mini-tip-text');
-        const ns = 'http://www.w3.org/2000/svg';
-        const W = 560, H = 220;       /* logical viewBox */
-        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      /* ===== Selected Publications mode: list + shared theme network ===== */
+      const THEMES = [
+        { id: 'genai',        label: 'Generative AI' },
+        { id: 'workflow',     label: 'Designer Workflow' },
+        { id: 'design-space', label: 'Design Space' },
+        { id: 'interface',    label: 'Interface · System' },
+      ];
 
-        const groupCols = { motivation: 90, method: W / 2, finding: W - 90 };
-        const groupColor = {
-          motivation: 'var(--accent-2)',
-          method: 'var(--accent)',
-          finding: 'var(--accent-3)',
-        };
-
-        const nodes = paper.concept_graph.nodes.map(n => ({ ...n }));
-        const byGroup = { motivation: [], method: [], finding: [] };
-        for (const n of nodes) (byGroup[n.group] || byGroup.method).push(n);
-
-        for (const [g, list] of Object.entries(byGroup)) {
-          const cx = groupCols[g];
-          const N = list.length;
-          for (let i = 0; i < N; i++) {
-            const t = (N === 1) ? 0.5 : i / (N - 1);
-            list[i].x = cx + (Math.sin(i * 2.3 + g.length) * 12);
-            list[i].y = 40 + t * (H - 80);
+      function jumpToPublication(id) {
+        const tabBtn = document.querySelector('.nav-item[data-tab="publications"]');
+        if (!tabBtn) return;
+        tabBtn.click();
+        setTimeout(() => {
+          const target = document.getElementById('pub-' + id);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.style.transition = 'background-color .8s ease';
+            target.style.backgroundColor = 'rgba(96, 153, 148, 0.10)';
+            setTimeout(() => { target.style.backgroundColor = ''; }, 1600);
           }
-        }
-
-        /* draw edges */
-        const idIdx = new Map(nodes.map((n, i) => [n.id, i]));
-        for (const [aId, bId] of paper.concept_graph.edges) {
-          const a = nodes[idIdx.get(aId)];
-          const b = nodes[idIdx.get(bId)];
-          if (!a || !b) continue;
-          const line = document.createElementNS(ns, 'path');
-          /* gentle curve via quadratic control point */
-          const mx = (a.x + b.x) / 2;
-          const my = (a.y + b.y) / 2 - 14;
-          line.setAttribute('d', `M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`);
-          line.setAttribute('class', 'gpl-mini-edge');
-          line.dataset.a = aId;
-          line.dataset.b = bId;
-          svg.appendChild(line);
-        }
-
-        /* draw nodes (group: circle + label) */
-        for (const n of nodes) {
-          const g = document.createElementNS(ns, 'g');
-          g.setAttribute('class', `gpl-mini-node grp-${n.group}`);
-          g.dataset.id = n.id;
-          g.setAttribute('transform', `translate(${n.x} ${n.y})`);
-
-          const halo = document.createElementNS(ns, 'circle');
-          halo.setAttribute('class', 'gpl-mini-halo');
-          halo.setAttribute('r', 14);
-          g.appendChild(halo);
-
-          const dot = document.createElementNS(ns, 'circle');
-          dot.setAttribute('r', 6);
-          dot.setAttribute('fill', groupColor[n.group] || groupColor.method);
-          dot.setAttribute('class', 'gpl-mini-dot');
-          g.appendChild(dot);
-
-          const t = document.createElementNS(ns, 'text');
-          /* labels lean toward center to keep within viewBox */
-          const onLeft = n.group === 'finding';
-          t.setAttribute('x', onLeft ? -10 : 10);
-          t.setAttribute('y', 4);
-          t.setAttribute('text-anchor', onLeft ? 'end' : 'start');
-          t.setAttribute('class', 'gpl-mini-label');
-          t.textContent = n.label;
-          g.appendChild(t);
-
-          /* hover handlers */
-          g.addEventListener('mouseenter', () => {
-            tipLabel.textContent = n.group;
-            tipText.textContent = n.sentence;
-            tip.classList.add('show');
-            host.querySelectorAll('.gpl-mini-edge').forEach(e => {
-              e.classList.toggle('hot', e.dataset.a === n.id || e.dataset.b === n.id);
-            });
-            host.querySelectorAll('.gpl-mini-node').forEach(o => {
-              o.classList.toggle('dim', o.dataset.id !== n.id);
-            });
-            g.classList.add('hot');
-          });
-          g.addEventListener('mouseleave', () => {
-            tip.classList.remove('show');
-            host.querySelectorAll('.gpl-mini-edge.hot').forEach(e => e.classList.remove('hot'));
-            host.querySelectorAll('.gpl-mini-node').forEach(o => o.classList.remove('dim'));
-            g.classList.remove('hot');
-          });
-
-          svg.appendChild(g);
-        }
+        }, 350);
       }
 
-      /* ===== Selected Publications mode: interactive expandable cards ===== */
       function renderPapersList() {
         if (!papersList) return;
         const selected = Object.values(PAPERS).filter(p => p.selected);
         selected.sort((a, b) => (b.year || 0) - (a.year || 0));
 
-        const html = `
+        papersList.innerHTML = `
           <div class="gpl-head">
             <span class="gpl-head-num">04</span>
             <span class="gpl-head-label">Selected Publications</span>
-            <span class="gpl-head-hint">click a card to expand</span>
+            <span class="gpl-head-hint">hover a paper · click to open</span>
           </div>
-          <div class="gpl-cards">
-            ${selected.map((p, i) => `
-              <article class="gpl-card" data-id="${p.id}" style="--i:${i}">
-                <header class="gpl-card-head">
-                  <span class="gpl-card-idx">/ ${String(i + 1).padStart(2, '0')}</span>
-                  <span class="gpl-card-venue">${p.venue}</span>
-                  <span class="gpl-card-toggle" aria-hidden="true">+</span>
-                </header>
-                <h3 class="gpl-card-title">${p.title}</h3>
-                <div class="gpl-card-authors">${p.authors}</div>
-                <div class="gpl-card-body">
-                  <div class="gpl-card-inner">
-                    ${p.concept_graph ? `
-                      <div class="gpl-mini" data-id="${p.id}">
-                        <svg class="gpl-mini-svg" aria-hidden="true"></svg>
-                        <div class="gpl-mini-tip" role="tooltip">
-                          <span class="gpl-mini-tip-label">hover a node</span>
-                          <span class="gpl-mini-tip-text">Each node is a key concept of the paper. Hover to read a line from the abstract.</span>
-                        </div>
-                        <div class="gpl-mini-legend">
-                          <span><i style="background:var(--accent-2)"></i> motivation</span>
-                          <span><i style="background:var(--accent)"></i> method</span>
-                          <span><i style="background:var(--accent-3)"></i> finding</span>
-                        </div>
-                      </div>` : ''}
-                    ${p.kws && p.kws.length ? `
-                      <div class="gpl-card-kws">
-                        ${p.kws.map(k => `<span class="gpl-card-kw">${k}</span>`).join('')}
-                      </div>` : ''}
-                    <div class="gpl-card-links">
-                      ${p.doi && p.doi !== '#' ? `<a href="${p.doi}" target="_blank" rel="noopener">↗ paper</a>` : ''}
-                      <button class="gpl-card-jump" data-id="${p.id}">↗ open in Publications</button>
-                    </div>
+          <div class="gpl-layout">
+            <div class="gpl-list">
+              ${selected.map((p, i) => `
+                <article class="gpl-row" data-id="${p.id}" style="--i:${i}">
+                  <div class="gpl-row-meta">
+                    <span class="gpl-row-idx">/ ${String(i + 1).padStart(2, '0')}</span>
+                    <span class="gpl-row-venue">${p.venue}</span>
                   </div>
-                </div>
-              </article>
-            `).join('')}
+                  <h3 class="gpl-row-title">${p.title}</h3>
+                  <div class="gpl-row-authors">${p.authors}</div>
+                </article>
+              `).join('')}
+            </div>
+            <aside class="gpl-network">
+              <div class="gpl-net-head">
+                <span class="gpl-net-label">common threads</span>
+                <span class="gpl-net-hint">hover a paper to trace its themes</span>
+              </div>
+              <svg class="gpl-net-svg" aria-hidden="true"></svg>
+            </aside>
           </div>
         `;
-        papersList.innerHTML = html;
 
-        papersList.querySelectorAll('.gpl-card').forEach(card => {
-          const head = card.querySelector('.gpl-card-head');
-          head.addEventListener('click', () => {
-            const wasExpanded = card.classList.contains('expanded');
-            card.classList.toggle('expanded');
-            const tog = card.querySelector('.gpl-card-toggle');
-            if (tog) tog.textContent = card.classList.contains('expanded') ? '–' : '+';
-            if (!wasExpanded) {
-              const mini = card.querySelector('.gpl-mini');
-              if (mini && !mini.dataset.drawn) {
-                drawMiniGraph(mini, PAPERS[mini.dataset.id]);
-                mini.dataset.drawn = '1';
-              }
-            }
-          });
-        });
-        papersList.querySelectorAll('.gpl-card-jump').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            const tabBtn = document.querySelector('.nav-item[data-tab="publications"]');
-            tabBtn.click();
-            setTimeout(() => {
-              const target = document.getElementById('pub-' + id);
-              if (target) {
-                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                target.style.transition = 'background-color .8s ease';
-                target.style.backgroundColor = 'rgba(96, 153, 148, 0.10)';
-                setTimeout(() => { target.style.backgroundColor = ''; }, 1600);
-              }
-            }, 350);
-          });
+        drawThemeNetwork(papersList.querySelector('.gpl-net-svg'), selected);
+
+        /* row click → jump; row hover → highlight in network */
+        papersList.querySelectorAll('.gpl-row').forEach(row => {
+          row.addEventListener('click', () => jumpToPublication(row.dataset.id));
+          row.addEventListener('mouseenter', () => highlightPaper(row.dataset.id, true));
+          row.addEventListener('mouseleave', () => highlightPaper(row.dataset.id, false));
         });
       }
+
+      /* === Theme network: 4 paper nodes (left ring) + 4 theme nodes (right ring) === */
+      function drawThemeNetwork(svg, papers) {
+        if (!svg) return;
+        const ns = 'http://www.w3.org/2000/svg';
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+        const W = 520, H = 380;
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+        /* layout: papers on the left vertical band, themes on the right vertical band */
+        const PX = 80, TX = W - 80;
+        const padY = 50;
+        const stepP = (H - padY * 2) / Math.max(1, papers.length - 1);
+        const stepT = (H - padY * 2) / Math.max(1, THEMES.length - 1);
+
+        const pos = new Map();
+        papers.forEach((p, i) => pos.set('p:' + p.id, { x: PX, y: padY + i * stepP, kind: 'paper', data: p }));
+        THEMES.forEach((t, i) => pos.set('t:' + t.id, { x: TX, y: padY + i * stepT, kind: 'theme', data: t }));
+
+        /* edges: every paper → its themes (curved) */
+        for (const p of papers) {
+          const a = pos.get('p:' + p.id);
+          for (const tid of (p.themes || [])) {
+            const b = pos.get('t:' + tid);
+            if (!b) continue;
+            const path = document.createElementNS(ns, 'path');
+            const cx1 = a.x + 160, cx2 = b.x - 160;
+            path.setAttribute('d', `M ${a.x} ${a.y} C ${cx1} ${a.y}, ${cx2} ${b.y}, ${b.x} ${b.y}`);
+            path.setAttribute('class', 'gpl-net-edge');
+            path.dataset.paper = p.id;
+            path.dataset.theme = tid;
+            svg.appendChild(path);
+          }
+        }
+
+        /* paper nodes (dots only — labels live in the list on the left side) */
+        for (const p of papers) {
+          const a = pos.get('p:' + p.id);
+          const g = document.createElementNS(ns, 'g');
+          g.setAttribute('class', 'gpl-net-paper');
+          g.setAttribute('transform', `translate(${a.x} ${a.y})`);
+          g.dataset.paper = p.id;
+
+          const halo = document.createElementNS(ns, 'circle');
+          halo.setAttribute('r', 12);
+          halo.setAttribute('class', 'gpl-net-halo');
+          g.appendChild(halo);
+
+          const dot = document.createElementNS(ns, 'circle');
+          dot.setAttribute('r', 5);
+          dot.setAttribute('class', 'gpl-net-dot');
+          g.appendChild(dot);
+
+          /* short label that mirrors the venue chip on the left */
+          const t = document.createElementNS(ns, 'text');
+          t.setAttribute('x', -14);
+          t.setAttribute('y', 4);
+          t.setAttribute('text-anchor', 'end');
+          t.setAttribute('class', 'gpl-net-paper-label');
+          t.textContent = (p.venue.split('·')[0] || p.venue).trim();
+          g.appendChild(t);
+
+          g.addEventListener('mouseenter', () => highlightPaper(p.id, true));
+          g.addEventListener('mouseleave', () => highlightPaper(p.id, false));
+          g.addEventListener('click', () => jumpToPublication(p.id));
+
+          svg.appendChild(g);
+        }
+
+        /* theme nodes */
+        for (const t of THEMES) {
+          const b = pos.get('t:' + t.id);
+          const g = document.createElementNS(ns, 'g');
+          g.setAttribute('class', 'gpl-net-theme');
+          g.setAttribute('transform', `translate(${b.x} ${b.y})`);
+          g.dataset.theme = t.id;
+
+          const halo = document.createElementNS(ns, 'circle');
+          halo.setAttribute('r', 14);
+          halo.setAttribute('class', 'gpl-net-halo');
+          g.appendChild(halo);
+
+          const dot = document.createElementNS(ns, 'circle');
+          dot.setAttribute('r', 7);
+          dot.setAttribute('class', 'gpl-net-theme-dot');
+          g.appendChild(dot);
+
+          const label = document.createElementNS(ns, 'text');
+          label.setAttribute('x', 14);
+          label.setAttribute('y', 4);
+          label.setAttribute('class', 'gpl-net-theme-label');
+          label.textContent = t.label;
+          g.appendChild(label);
+
+          g.addEventListener('mouseenter', () => highlightTheme(t.id, true));
+          g.addEventListener('mouseleave', () => highlightTheme(t.id, false));
+          svg.appendChild(g);
+        }
+      }
+
+      function highlightPaper(id, on) {
+        const root = papersList;
+        if (!root) return;
+        root.classList.toggle('has-hover', on);
+        root.querySelectorAll('.gpl-row').forEach(r =>
+          r.classList.toggle('hot', on && r.dataset.id === id)
+        );
+        root.querySelectorAll('.gpl-net-edge').forEach(e =>
+          e.classList.toggle('hot', on && e.dataset.paper === id)
+        );
+        root.querySelectorAll('.gpl-net-paper').forEach(p =>
+          p.classList.toggle('hot', on && p.dataset.paper === id)
+        );
+        /* themes connected to this paper light up */
+        const paper = PAPERS[id];
+        const themeSet = new Set((paper && paper.themes) || []);
+        root.querySelectorAll('.gpl-net-theme').forEach(t =>
+          t.classList.toggle('hot', on && themeSet.has(t.dataset.theme))
+        );
+      }
+
+      function highlightTheme(id, on) {
+        const root = papersList;
+        if (!root) return;
+        root.classList.toggle('has-hover', on);
+        const paperSet = new Set();
+        for (const p of Object.values(PAPERS)) {
+          if (p.selected && (p.themes || []).includes(id)) paperSet.add(p.id);
+        }
+        root.querySelectorAll('.gpl-net-edge').forEach(e =>
+          e.classList.toggle('hot', on && e.dataset.theme === id)
+        );
+        root.querySelectorAll('.gpl-net-theme').forEach(t =>
+          t.classList.toggle('hot', on && t.dataset.theme === id)
+        );
+        root.querySelectorAll('.gpl-net-paper').forEach(p =>
+          p.classList.toggle('hot', on && paperSet.has(p.dataset.paper))
+        );
+        root.querySelectorAll('.gpl-row').forEach(r =>
+          r.classList.toggle('hot', on && paperSet.has(r.dataset.id))
+        );
+      }
+
       renderPapersList();
 
       /* ===== Toggle: keywords / papers ===== */
