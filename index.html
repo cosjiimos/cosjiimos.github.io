@@ -325,19 +325,26 @@
 
     /* Sections that must keep their own white/paper background so the ASCII
        only shows in the empty gaps (around the graph card on Home). */
-    .news-block,
-    #publications,
-    #patents,
-    #works,
-    #cv,
-    #research {
+    /* Only the News block keeps an opaque background; everything else lets
+       the ASCII layer show through behind it. */
+    .news-block {
       background: var(--bg);
       position: relative;
       z-index: 1;
     }
 
+    #publications,
+    #patents,
+    #works,
+    #cv,
+    #research {
+      background: transparent;
+      position: relative;
+      z-index: 1;
+    }
+
     .footer {
-      background: var(--bg);
+      background: transparent;
       position: relative;
       z-index: 4;
     }
@@ -4460,7 +4467,7 @@
             const totalOx = ox + Math.cos(t * 2.4 + phase) * near * 6;
             const totalOy = oy + Math.sin(t * 2.4 + phase) * near * 6;
 
-            const a = 0.08 + Math.abs(wob) * 0.08 + near * 0.35;
+            const a = 0.18 + Math.abs(wob) * 0.14 + near * 0.45;
             c.fillStyle = near > 0
               ? `rgba(96, 153, 148, ${a.toFixed(3)})`
               : `rgba(74, 74, 82, ${a.toFixed(3)})`;
