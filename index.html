@@ -4235,11 +4235,14 @@
 
         const ro = new ResizeObserver(layout);
         ro.observe(canvas);
+        canvas.addEventListener('relayout', layout);
         layout();
         if (!kwState.running) { kwState.running = true; requestAnimationFrame(tickKW); }
 
         function layout() {
           const rect = canvas.getBoundingClientRect();
+          console.log('[kw-field] layout', { w: rect.width, h: rect.height, items: items.length });
+          if (rect.width < 8 || rect.height < 8) return;     /* wait until laid out */
           const DPR = Math.min(window.devicePixelRatio || 1, 2);
           kwState.DPR = DPR;
           kwState.W = rect.width;
@@ -4300,6 +4303,7 @@
         if (!kwState) return;
         const { c, W, H, items, t } = kwState;
         kwState.t = t + 0.012;
+        if (W < 8 || H < 8) { requestAnimationFrame(tickKW); return; }
         const T = kwState.t;
         c.clearRect(0, 0, W, H);
 
@@ -4415,6 +4419,13 @@
         if (view !== 'keywords') {
           closePopup();
           hoverPanel.classList.remove('show');
+        }
+        if (view === 'papers') {
+          /* canvas may have been hidden during init; force re-layout now that it's visible */
+          requestAnimationFrame(() => {
+            const cv = papersList && papersList.querySelector('.gpl-net-canvas');
+            if (cv) cv.dispatchEvent(new Event('relayout'));
+          });
         }
       }
       toggleBtns.forEach(b => {
