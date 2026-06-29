@@ -578,84 +578,214 @@
       display: none;
     }
 
-    .gc-papers-list .gpl-year {
-      display: grid;
-      grid-template-columns: 60px 1fr;
-      gap: 18px;
-      align-items: start;
-      padding: 14px 0;
-      border-top: 1px solid var(--line-soft);
-    }
-
-    .gc-papers-list .gpl-year:first-child {
-      border-top: 0;
-    }
-
-    .gc-papers-list .gpl-yr {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: var(--ink-muted);
-      letter-spacing: .14em;
-      padding-top: 4px;
-    }
-
-    .gc-papers-list .gpl-items {
+    /* Header above the 4 cards */
+    .gc-papers-list .gpl-head {
       display: flex;
-      flex-direction: column;
+      align-items: baseline;
       gap: 10px;
+      padding: 6px 4px 18px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 18px;
     }
 
-    .gc-papers-list .gpl-item {
-      display: block;
-      width: 100%;
-      text-align: left;
-      background: transparent;
-      border: 0;
-      padding: 6px 0;
-      cursor: pointer;
-      border-bottom: 1px dotted var(--line);
-      transition: background .15s ease, padding .15s ease;
-    }
-
-    .gc-papers-list .gpl-item:hover {
-      background: rgba(96, 153, 148, 0.05);
-      padding-left: 6px;
-      padding-right: 6px;
-    }
-
-    .gc-papers-list .gpl-venue {
+    .gc-papers-list .gpl-head-num {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: .2em;
+    }
+
+    .gc-papers-list .gpl-head-label {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-size: 18px;
+      color: var(--ink);
+    }
+
+    .gc-papers-list .gpl-head-hint {
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
       letter-spacing: .14em;
       text-transform: uppercase;
       color: var(--ink-muted);
-      display: block;
-      margin-bottom: 3px;
     }
 
-    .gc-papers-list .gpl-title {
+    /* Card grid */
+    .gc-papers-list .gpl-cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .gc-papers-list .gpl-card {
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: rgba(252, 252, 250, 0.84);
+      padding: 14px 16px 16px;
+      transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+      animation: gplFade .4s ease both;
+      animation-delay: calc(var(--i) * 60ms);
+    }
+
+    @keyframes gplFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .gc-papers-list .gpl-card:hover {
+      border-color: var(--ink-muted);
+      box-shadow: 0 8px 24px -16px rgba(22, 22, 26, 0.18);
+    }
+
+    .gc-papers-list .gpl-card.expanded {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 12px 36px -22px rgba(96, 153, 148, 0.35);
+    }
+
+    .gc-papers-list .gpl-card-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .gc-papers-list .gpl-card-idx {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .18em;
+      color: var(--ink-muted);
+    }
+
+    .gc-papers-list .gpl-card-venue {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .gc-papers-list .gpl-card-toggle {
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: var(--ink-muted);
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      transition: transform .25s ease, color .2s ease, border-color .2s ease;
+    }
+
+    .gc-papers-list .gpl-card.expanded .gpl-card-toggle {
+      color: var(--accent);
+      border-color: var(--accent);
+      transform: rotate(180deg);
+    }
+
+    .gc-papers-list .gpl-card-title {
       font-family: 'Fraunces', serif;
-      font-size: 14px;
+      font-size: 17px;
+      line-height: 1.25;
       color: var(--ink);
-      line-height: 1.35;
+      margin: 10px 0 6px;
     }
 
-    .gc-papers-list .gpl-title em {
+    .gc-papers-list .gpl-card-title em {
       font-style: italic;
       color: var(--accent);
     }
 
-    .gc-papers-list .gpl-authors {
-      display: block;
-      margin-top: 3px;
+    .gc-papers-list .gpl-card-authors {
       font-family: 'Inter', sans-serif;
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--ink-muted);
+      line-height: 1.45;
     }
 
-    .gc-papers-list .gpl-authors b {
+    .gc-papers-list .gpl-card-authors b {
       color: var(--ink-soft);
       font-weight: 500;
+    }
+
+    /* Expandable body — animated reveal */
+    .gc-papers-list .gpl-card-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .35s ease, opacity .25s ease, margin-top .25s ease;
+      opacity: 0;
+      margin-top: 0;
+    }
+
+    .gc-papers-list .gpl-card.expanded .gpl-card-body {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-top: 12px;
+    }
+
+    .gc-papers-list .gpl-card-body > * {
+      min-height: 0;
+    }
+
+    .gc-papers-list .gpl-card-body {
+      overflow: hidden;
+    }
+
+    .gc-papers-list .gpl-card-abstract {
+      font-family: 'Fraunces', serif;
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+      margin: 0 0 12px;
+    }
+
+    .gc-papers-list .gpl-card-kws {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .gc-papers-list .gpl-card-kw {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      padding: 2px 9px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+    }
+
+    .gc-papers-list .gpl-card-links {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .gc-papers-list .gpl-card-links a,
+    .gc-papers-list .gpl-card-jump {
+      color: var(--accent);
+      background: transparent;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .gc-papers-list .gpl-card-links a:hover,
+    .gc-papers-list .gpl-card-jump:hover {
+      color: var(--ink);
+      text-decoration: underline;
     }
 
     .graph-card .gc-hint::before {
@@ -2192,7 +2322,7 @@
               <span class="gc-tg-num">01</span> keywords
             </button>
             <button class="gc-tg-btn" data-view="papers" role="tab" aria-selected="false">
-              <span class="gc-tg-num">02</span> papers
+              <span class="gc-tg-num">02</span> selected publications
             </button>
           </div>
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
@@ -3318,10 +3448,13 @@
           id: 'genpara',
           year: 2025,
           venue: 'CHI \'25 · ACM',
-          title: '<em>GenPara</em> — Enhancing 3D Design Editing with Text-Conditional Shape Parameters',
+          title: '<em>GenPara</em> — Enhancing the 3D Design Editing Process by Inferring Users\' Regions of Interest with Text-Conditional Shape Parameters',
           short: 'GenPara — 3D design editing via text-conditional shape parameters',
           authors: '<b>Jiin Choi</b>, Seung Won Lee, Kyung Hoon Hyun',
           doi: 'https://doi.org/10.1145/3706598.3713487',
+          selected: true,
+          abstract: "In 3D design, specifying design objectives and visualizing complex shapes through text alone proves to be a significant challenge. Although advancements in 3D GenAI have significantly enhanced part assembly and the creation of high-quality 3D designs, many systems still to dynamically generate and edit design elements based on the shape parameters. To bridge this gap, we propose GenPara, an interactive 3D design editing system that leverages text-conditional shape parameters of part-aware 3D designs and visualizes design space within the Exploration Map and Design Versioning Tree. Additionally, among the various shape parameters generated by LLM, the system extracts and provides design outcomes within the user's regions of interest based on Bayesian inference. A user study (N = 16) revealed that GenPara enhanced the comprehension and management of designers with text-conditional shape parameters, streamlining design exploration and concretization. This improvement boosted efficiency and creativity of the 3D design process.",
+          kws: ['3D Generative AI', 'Design Space', 'LLMs', 'Bayesian Inference', 'Human-AI Interaction'],
         },
         cmlsearch: {
           id: 'cmlsearch',
@@ -3336,10 +3469,13 @@
           id: 'multimodal',
           year: 2025,
           venue: 'CHI \'25 Workshop',
-          title: 'Toward <em>AI-driven Multimodal Interfaces</em> for Industrial CAD',
+          title: 'Toward <em>AI-driven Multimodal Interfaces</em> for Industrial CAD Modeling',
           short: 'Multimodal CAD — AI-driven interfaces for industrial 3D modeling',
           authors: '<b>Jiin Choi</b>†, Yugyeong Jang†, Kyung Hoon Hyun',
           doi: 'https://www.researchgate.net/publication/390114821',
+          selected: true,
+          abstract: "AI-driven multimodal interfaces have the potential to revolutionize industrial 3D CAD modeling by improving workflow efficiency and user experience. However, the integration of these technologies remains challenging due to software constraints, user adoption barriers, and limitations in AI model adaptability. This paper explores the role of multimodal AI in CAD environments, examining its current applications, key challenges, and future research directions. We analyze Bayesian workflow inference, multimodal input strategies, and collaborative AI-driven interfaces to identify areas where AI can enhance CAD design processes while addressing usability concerns in industrial manufacturing settings.",
+          kws: ['AI-assisted CAD', 'Multimodal UX', '3D Modeling Workflow', 'Industrial Design', 'HCI'],
         },
         typeface: {
           id: 'typeface',
@@ -3366,16 +3502,22 @@
           title: 'Modeling Sequential Design Actions as Designer <em>Externalization</em> on an Infinite Canvas',
           short: 'Sequential design actions as externalization on an infinite canvas',
           authors: 'Yejin Yun†, Seung Won Lee†, <b>Jiin Choi†</b>, Kyung Hoon Hyun',
-          doi: '#',
+          doi: 'https://dl.acm.org/doi/pdf/10.1145/3772363.3799044',
+          selected: true,
+          abstract: "Infinite canvas platforms are becoming central to contemporary design practice, enabling designers to externalize cognition through the spatial arrangement of multimodal artifacts. As AI agents increasingly generate and organize content within these environments, their impact on designers' externalization processes remains underexplored. We report a field study with eight professional designers comparing workflows with and without an AI organizing agent. Through a sequence analysis of 5,838 design actions, we identify three key shifts: (1) AI integration reallocates cognitive effort from spatial management to content curation and relational structuring, without increasing active time; (2) a characteristic generate-and-curate cycle emerges in which designers' demands on the agent intensify while the agent's functional role adapts; and (3) AI's role evolves from a divergent catalyst in early stages to a convergent curator in later phases. These findings offer a behavioral model for designing phase-adaptive AI tools that support human–AI co-evolution on infinite canvases.",
+          kws: ['Infinite Canvas', 'Sequential Action Analysis', 'Deployment Study', 'Agentic AI'],
         },
         workflownet: {
           id: 'workflownet',
           year: 2026,
-          venue: 'ADR · 2026',
-          title: '<em>Workflow-Net</em> — Understanding Designer Workflows in GenAI-Driven Systems',
+          venue: 'ADR · 2026 (vol. 39, no. 2: 7–34)',
+          title: '<em>Workflow-Net</em>: Toward Understanding Designer Workflows in Generative AI-Driven Systems through Comparing Node- and Prompt-Based Interfaces',
           short: 'Workflow-Net — Comparing node- and prompt-based interfaces for designer workflows',
           authors: 'Tae Hee Jo†, <b>Jiin Choi†</b>, Semin Jin, Seung Won Lee, Yugyeong Jang, Sang Woon Park, Seonghoon Ban, Kyung Hoon Hyun',
           doi: 'http://dx.doi.org/10.15187/adr.2026.05.39.2.7',
+          selected: true,
+          abstract: "Generative artificial intelligence (AI) is increasingly integrated into design practice, yet how these generative AI-driven design support system interface frameworks shape the designers' workflow remains underexplored. To address this gap, we formalized and compared three generative AI-driven interfaces: Agentic Prompt-Based (AB), Programming Node-Based (PB), and Creative Node-Based (CB). Studying their influence requires methods that capture workflow dynamics beyond micro-level actions. Existing approaches such as linkography or workflow graphs (W-graphs) focus on words, concepts, or artifacts, limiting the analysis of high-level actions and cross-user patterns. This study introduces Workflow-Net, a novel evaluation method that uses large language models (LLMs) to cluster structured protocol data based on semantic intent to map high-level design actions and to aggregate individual workflows into a comprehensive, weighted directed graph. A within-subject user study was conducted with nine designers, where participants performed three distinct design tasks across all three interfaces to capture multi-user, cross-interface behavioral patterns. Findings show that interface frameworks do not merely support design but strongly influence designers' behavior by structuring the cognitive arc. AB supported initial ideation but limited refinement due to text abstraction gaps and a lack of iterative detail control. PB offered precision and granular control but enforced rigid linearity, extreme convergence, and the highest cognitive load. In contrast, CB best supported the creative process by enhancing designer agency and satisfaction, effectively balancing exploration with refinement through automated process traceability. This study establishes that the interface framework is a structural determinant of the creative workflow. While AB and PB interfaces impose significant tradeoffs through abstraction gaps or high cognitive load, the CB interface emerged as a balanced model that fosters higher designer agency. Beyond evaluation, the Workflow-Net methodology offers a foundation for developing future hybrid, agent-assisted co-creative partners that adapt to the fluid dynamics of the designer's workflow.",
+          kws: ['Design Research', 'Designer Workflow', 'Design Process Analysis', 'Interface Framework', 'Node-based Interface', 'Generative AI'],
         },
       };
 
@@ -3780,22 +3922,20 @@
           n.vx += breathe * 0.0018 * (Math.random() - 0.5);
           n.vy += breathe * 0.0018 * (Math.random() - 0.5);
 
-          /* gentle pairwise force: spring at long range, repulse at short range */
+          /* soft mutual repulsion only — keeps the field spread out, no convergence */
           for (let j = 0; j < nodes.length; j++) {
             if (j === i) continue;
             const m = nodes[j];
-            const dx = m.x - n.x, dy = m.y - n.y;
+            const dx = n.x - m.x, dy = n.y - m.y;
             const d2 = dx * dx + dy * dy;
-            if (d2 < 9 || d2 > 90000) continue;
+            if (d2 > 14000 || d2 < 1) continue;
             const d = Math.sqrt(d2);
-            const ideal = 150;
-            /* small attractive pull when far, soft push when close */
-            const k = (d - ideal) * 0.00018;
-            n.vx += (dx / d) * k;
-            n.vy += (dy / d) * k;
+            const push = 0.025 / d;
+            n.vx += (dx / d) * push;
+            n.vy += (dy / d) * push;
           }
 
-          n.vx *= 0.965; n.vy *= 0.965;
+          n.vx *= 0.975; n.vy *= 0.975;
 
           const pad = 24;
           if (n.x < pad) { n.x = pad; n.vx *= -1; }
@@ -4001,34 +4141,56 @@
         hoverPanel.classList.add('show');
       }
 
-      /* ===== Papers mode: chronological list ===== */
+      /* ===== Selected Publications mode: interactive expandable cards ===== */
       function renderPapersList() {
         if (!papersList) return;
-        const arr = Object.values(PAPERS).slice();
-        arr.sort((a, b) => (b.year || 0) - (a.year || 0));
-        const byYear = new Map();
-        for (const p of arr) {
-          const y = p.year || '—';
-          if (!byYear.has(y)) byYear.set(y, []);
-          byYear.get(y).push(p);
-        }
-        const html = Array.from(byYear.entries()).map(([y, list]) => `
-          <div class="gpl-year">
-            <div class="gpl-yr">${y}</div>
-            <div class="gpl-items">
-              ${list.map(p => `
-                <button class="gpl-item" data-id="${p.id}">
-                  <span class="gpl-venue">${p.venue}</span>
-                  <span class="gpl-title">${p.title}</span>
-                  <span class="gpl-authors">${p.authors}</span>
-                </button>
-              `).join('')}
-            </div>
+        const selected = Object.values(PAPERS).filter(p => p.selected);
+        selected.sort((a, b) => (b.year || 0) - (a.year || 0));
+
+        const html = `
+          <div class="gpl-head">
+            <span class="gpl-head-num">04</span>
+            <span class="gpl-head-label">Selected Publications</span>
+            <span class="gpl-head-hint">click a card to expand</span>
           </div>
-        `).join('');
+          <div class="gpl-cards">
+            ${selected.map((p, i) => `
+              <article class="gpl-card" data-id="${p.id}" style="--i:${i}">
+                <header class="gpl-card-head">
+                  <span class="gpl-card-idx">/ ${String(i + 1).padStart(2, '0')}</span>
+                  <span class="gpl-card-venue">${p.venue}</span>
+                  <span class="gpl-card-toggle" aria-hidden="true">+</span>
+                </header>
+                <h3 class="gpl-card-title">${p.title}</h3>
+                <div class="gpl-card-authors">${p.authors}</div>
+                <div class="gpl-card-body">
+                  ${p.abstract ? `<p class="gpl-card-abstract">${p.abstract}</p>` : ''}
+                  ${p.kws && p.kws.length ? `
+                    <div class="gpl-card-kws">
+                      ${p.kws.map(k => `<span class="gpl-card-kw">${k}</span>`).join('')}
+                    </div>` : ''}
+                  <div class="gpl-card-links">
+                    ${p.doi && p.doi !== '#' ? `<a href="${p.doi}" target="_blank" rel="noopener">↗ paper</a>` : ''}
+                    <button class="gpl-card-jump" data-id="${p.id}">↗ open in Publications</button>
+                  </div>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        `;
         papersList.innerHTML = html;
-        papersList.querySelectorAll('.gpl-item').forEach(btn => {
-          btn.addEventListener('click', () => {
+
+        papersList.querySelectorAll('.gpl-card').forEach(card => {
+          const head = card.querySelector('.gpl-card-head');
+          head.addEventListener('click', () => {
+            card.classList.toggle('expanded');
+            const tog = card.querySelector('.gpl-card-toggle');
+            if (tog) tog.textContent = card.classList.contains('expanded') ? '–' : '+';
+          });
+        });
+        papersList.querySelectorAll('.gpl-card-jump').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const id = btn.dataset.id;
             const tabBtn = document.querySelector('.nav-item[data-tab="publications"]');
             tabBtn.click();
