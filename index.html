@@ -360,47 +360,51 @@
       font-weight: 500;
     }
 
-    /* Toggle above the graph card */
-    .gc-toggle {
+    /* Toggle — pinned inside the graph card's top-left corner */
+    .graph-card .gc-toggle {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 3;
       display: flex;
       gap: 4px;
-      margin-bottom: 10px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 10.5px;
       letter-spacing: .14em;
       text-transform: uppercase;
     }
 
-    .gc-tg-btn {
-      background: transparent;
+    .graph-card .gc-tg-btn {
+      background: rgba(252, 252, 250, 0.78);
       border: 1px solid var(--line);
       border-radius: 2px;
       color: var(--ink-muted);
-      padding: 6px 12px;
+      padding: 5px 10px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       transition: color .18s ease, border-color .18s ease, background .18s ease;
+      backdrop-filter: blur(2px);
     }
 
-    .gc-tg-btn:hover {
+    .graph-card .gc-tg-btn:hover {
       color: var(--ink-soft);
       border-color: var(--ink-muted);
     }
 
-    .gc-tg-btn.active {
+    .graph-card .gc-tg-btn.active {
       color: var(--accent);
       border-color: var(--accent);
-      background: rgba(96, 153, 148, 0.06);
+      background: rgba(96, 153, 148, 0.10);
     }
 
-    .gc-tg-btn .gc-tg-num {
+    .graph-card .gc-tg-btn .gc-tg-num {
       color: var(--ink-muted);
       font-size: 9px;
     }
 
-    .gc-tg-btn.active .gc-tg-num {
+    .graph-card .gc-tg-btn.active .gc-tg-num {
       color: var(--accent);
     }
 
@@ -550,7 +554,7 @@
     .graph-card[data-view="papers"] {
       aspect-ratio: auto;
       max-height: none;
-      padding: 22px 26px;
+      padding: 56px 26px 22px;
     }
 
     .graph-card .gc-papers-list {
@@ -561,6 +565,11 @@
 
     .graph-card[data-view="papers"] .gc-papers-list {
       display: block;
+    }
+
+    /* In keywords mode, the papers-list element exists but stays hidden */
+    .graph-card[data-view="keywords"] .gc-papers-list {
+      display: none;
     }
 
     .gc-papers-list .gpl-year {
@@ -2171,16 +2180,15 @@
           </div>
         </div>
 
-        <div class="gc-toggle" role="tablist" aria-label="Publications view">
-          <button class="gc-tg-btn active" data-view="keywords" role="tab" aria-selected="true">
-            <span class="gc-tg-num">01</span> keywords
-          </button>
-          <button class="gc-tg-btn" data-view="papers" role="tab" aria-selected="false">
-            <span class="gc-tg-num">02</span> papers
-          </button>
-        </div>
-
         <div class="graph-card" data-view="keywords">
+          <div class="gc-toggle" role="tablist" aria-label="Publications view">
+            <button class="gc-tg-btn active" data-view="keywords" role="tab" aria-selected="true">
+              <span class="gc-tg-num">01</span> keywords
+            </button>
+            <button class="gc-tg-btn" data-view="papers" role="tab" aria-selected="false">
+              <span class="gc-tg-num">02</span> papers
+            </button>
+          </div>
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
           <div class="gc-hint">hover keywords · click to pin</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
