@@ -399,12 +399,11 @@
       font-weight: 500;
     }
 
-    /* Home graph card */
+    /* Home graph card — fills main width, height scales with viewport */
     .graph-card {
       position: relative;
       width: 100%;
-      aspect-ratio: 2 / 1;
-      max-height: 340px;
+      height: clamp(280px, 56vh, 620px);
       background:
         radial-gradient(ellipse 36% 68% at 50% 50%,
           rgba(96, 153, 148, 0.32) 0%,
@@ -1949,7 +1948,7 @@
       }
 
       .graph-card {
-        aspect-ratio: 4 / 5;
+        height: clamp(360px, 70vh, 640px);
       }
     }
   </style>
