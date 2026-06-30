@@ -3461,25 +3461,43 @@
         const n = nodes[idx];
         const x = n.x;
         const y = n.y;
-        const popW = 320;
+        /* popup width: shrink if card is narrow so it always fits */
+        const popW = Math.min(320, Math.max(220, W - 24));
+        popup.style.width = popW + 'px';
         const popH = popup.offsetHeight || 240;
         const margin = 12;
-        const gap = 18;
+        const gap = 14;
 
-        /* prefer ABOVE the node, centered on x */
-        let px = x - popW / 2;
-        let py = y - gap - popH;
-        let side = 'top';
+        let px, py, side;
 
-        /* if not enough room above, try below */
-        if (py < margin) {
+        /* Try: above-centered → below-centered → left-of-node → right-of-node */
+        const fitsAbove = (y - gap - popH) >= margin;
+        const fitsBelow = (y + gap + popH) <= (H - margin);
+
+        if (fitsAbove) {
+          px = x - popW / 2;
+          py = y - gap - popH;
+          side = 'top';
+        } else if (fitsBelow) {
+          px = x - popW / 2;
           py = y + gap;
           side = 'bottom';
+        } else {
+          /* place beside the node — prefer whichever side has more room */
+          const roomLeft = x - margin;
+          const roomRight = W - x - margin;
+          if (roomLeft > roomRight) {
+            px = x - gap - popW;
+            side = 'left';
+          } else {
+            px = x + gap;
+            side = 'right';
+          }
+          py = y - popH / 2;
         }
 
-        /* clamp horizontally inside card */
+        /* final clamp so it never escapes the card */
         px = Math.max(margin, Math.min(W - popW - margin, px));
-        /* clamp vertically as last resort */
         py = Math.max(margin, Math.min(H - popH - margin, py));
 
         popup.style.left = px + 'px';
