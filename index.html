@@ -2017,6 +2017,12 @@
           <div class="block-label">— News &nbsp;·&nbsp; Recent</div>
           <div class="news-list">
             <div class="news-item">
+              <span class="date">2026 · 08</span>
+              <span><b>CogChat</b> accepted to <i>ACM UIST 2026</i>, Detroit 🇺🇸 — knowledge graph-augmented
+                conversational AI for cognitive grounding in design generation 🎉</span>
+              <span class="tag">paper</span>
+            </div>
+            <div class="news-item">
               <span class="date">2026 · 03</span>
               <span>Our paper on <b>sequential design actions as designer externalization</b> accepted to <i>CHI 2026
                   Extended Abstracts</i> 🎉</span>
@@ -2184,7 +2190,7 @@
         </div>
 
         <div class="pub-subtabs" role="tablist">
-          <button class="pub-subtab active" data-sub="pub-int">Internatiaonal<span class="ct">07</span></button>
+          <button class="pub-subtab active" data-sub="pub-int">Internatiaonal<span class="ct">08</span></button>
           <button class="pub-subtab" data-sub="pub-kr">Domestic<span class="ct">08</span></button>
         </div>
 
@@ -2195,6 +2201,24 @@
             <div class="year-row">
               <div class="year">2026</div>
               <div class="pub-list">
+                <article class="pub" id="pub-cogchat">
+                  <div>
+                    <div class="pub-head"><span class="venue">UIST '26</span><span>conference · ACM · SCIE Top Tier (h5-index 53)</span></div>
+                    <h3><em>CogChat</em> — Knowledge Graph-Augmented Conversational AI with Heterogeneous Graph
+                      Transformer for Cognitive Grounding in Design Generation</h3>
+                    <div class="authors"><b>Jiin Choi</b>, Kyung Hoon Hyun<sup>CA</sup></div>
+                    <div class="journal">Proc. ACM UIST 2026 · Detroit, USA</div>
+                    <div class="links">
+                      <a href="https://doi.org/10.1145/3830398.3830724" target="_blank" rel="noopener">↗ doi</a>
+                      <a href="https://doi.org/10.48550/arXiv.2608.13216" target="_blank" rel="noopener">↗ arxiv</a>
+                      <a href="https://cosjiimos.github.io/CogChat/" target="_blank" rel="noopener">↗ Project Page</a>
+                    </div>
+                  </div>
+                  <div class="pub-thumb">
+                    <img src="images/cogchat_thumbnail_low.gif" alt="CogChat paper thumbnail">
+                  </div>
+                </article>
+
                 <article class="pub" id="pub-workflownet">
                   <div>
                     <div class="pub-head"><span class="venue">ADR</span><span>SCOPUS · journal · 🥇 Cover Paper</span></div>
@@ -3243,6 +3267,18 @@
           themes: ['genai', 'workflow', 'interface'],
           kws: ['Infinite Canvas', 'Sequential Action Analysis', 'Deployment Study', 'Agentic AI'],
         },
+        cogchat: {
+          id: 'cogchat',
+          year: 2026,
+          venue: 'UIST \'26 · ACM',
+          title: '<em>CogChat</em>: Knowledge Graph-Augmented Conversational AI with Heterogeneous Graph Transformer for Cognitive Grounding in Design Generation',
+          short: 'CogChat — Knowledge graph-augmented conversational AI for cognitive grounding',
+          authors: '<b>Jiin Choi</b>, Kyung Hoon Hyun',
+          doi: 'https://doi.org/10.1145/3830398.3830724',
+          selected: true,
+          themes: ['genai', 'interface', 'design-space'],
+          kws: ['Knowledge Graph', 'Conversational AI', 'Graph Transformer', 'Cognitive Grounding', 'Design Generation'],
+        },
         workflownet: {
           id: 'workflownet',
           year: 2026,
@@ -3265,7 +3301,10 @@
         { word: 'intent', papers: ['bogen', 'genpara'] },
         { word: 'alignment', papers: ['genpara', 'bogen'] },
         { word: 'exploration', papers: ['sketch', 'genpara', 'bogen', 'canvas'] },
-        { word: 'GenAI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet'] },
+        { word: 'GenAI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat'] },
+        { word: 'knowledge graph', papers: ['cogchat'] },
+        { word: 'conversational AI', papers: ['cogchat'] },
+        { word: 'cognitive grounding', papers: ['cogchat'] },
         { word: 'iterate', papers: ['genpara', 'bogen', 'canvas'] },
         { word: 'semantic', papers: ['cmlsearch', 'typeface'] },
         { word: 'multimodal', papers: ['multimodal'] },
@@ -3281,7 +3320,8 @@
         { word: 'workflow', papers: ['workflownet', 'canvas'] },
         { word: 'node-based', papers: ['workflownet'] },
         { word: 'prompt-based', papers: ['workflownet', 'sketch'] },
-        { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas'] },
+        { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas', 'cogchat'] },
+        { word: 'LLM', papers: ['cogchat', 'genpara'] },
         { word: 'infinite canvas', papers: ['canvas'] },
       ];
 
