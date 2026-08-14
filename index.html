@@ -1354,6 +1354,16 @@
       height: 100%;
     }
 
+    /* Placeholder for papers whose thumbnail is not public yet */
+    .pub-thumb.pending::after {
+      content: 'TBD';
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .18em;
+      color: var(--ink-muted);
+      opacity: .5;
+    }
+
     /* ===== DESIGN WORKS ===== */
     .works-category {
       margin-bottom: 56px;
@@ -2035,8 +2045,8 @@
             </div>
             <div class="news-item">
               <span class="date">2026 · 02</span>
-              <span><b>BOgen</b> published in <i>Scientific Reports</i> — part-level 3D shape generation via
-                preferential Bayesian optimization.</span>
+              <span>Our paper on <b>cognitive space modeling &amp; segment-based design generation</b> accepted to
+                <i>Advanced Engineering Informatics</i> 🎉</span>
               <span class="tag">paper</span>
             </div>
             <div class="news-item">
@@ -2190,7 +2200,7 @@
         </div>
 
         <div class="pub-subtabs" role="tablist">
-          <button class="pub-subtab active" data-sub="pub-int">Internatiaonal<span class="ct">08</span></button>
+          <button class="pub-subtab active" data-sub="pub-int">Internatiaonal<span class="ct">09</span></button>
           <button class="pub-subtab" data-sub="pub-kr">Domestic<span class="ct">08</span></button>
         </div>
 
@@ -2201,6 +2211,21 @@
             <div class="year-row">
               <div class="year">2026</div>
               <div class="pub-list">
+                <article class="pub" id="pub-advei">
+                  <div>
+                    <div class="pub-head"><span class="venue">Adv. Eng. Inf.</span><span>SCIE Top 2% · journal · IF
+                        11.500</span></div>
+                    <h3>Cognitive Space Modeling &amp; Segment-based Design Generation</h3>
+                    <div class="authors">Author list to be announced</div>
+                    <div class="journal">Advanced Engineering Informatics (Accepted, 2026) · Computer Science, AI;
+                      Multidisciplinary</div>
+                    <div class="links">
+                      <span>details forthcoming</span>
+                    </div>
+                  </div>
+                  <div class="pub-thumb pending"></div>
+                </article>
+
                 <article class="pub" id="pub-cogchat">
                   <div>
                     <div class="pub-head"><span class="venue">UIST '26</span><span>conference · ACM · BK CSA081 · h5-index 53</span></div>
