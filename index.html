@@ -442,6 +442,106 @@
       z-index: 1;
     }
 
+    /* ----- view toggle (resolve / states / field) ----- */
+    .graph-card .gc-views {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 3;
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 20px -14px rgba(96, 153, 148, 0.55);
+    }
+
+    .graph-card .gc-view-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      padding: 5px 10px;
+      border-radius: 999px;
+      transition: color .18s ease, background-color .18s ease;
+    }
+
+    .graph-card .gc-view-btn:hover {
+      color: var(--ink-soft);
+      background: rgba(96, 153, 148, 0.09);
+    }
+
+    .graph-card .gc-view-btn.is-on {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    /* ----- entry → derived scrubber ----- */
+    .graph-card .gc-scrub {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(6px);
+    }
+
+    .graph-card .gc-scrub[hidden] { display: none; }
+
+    .graph-card .gc-scrub .gcs-end {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      user-select: none;
+    }
+
+    .graph-card .gc-scrub input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 120px;
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 100%);
+      opacity: .55;
+      cursor: ew-resize;
+    }
+
+    .graph-card .gc-scrub input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1.5px solid var(--accent);
+      box-shadow: 0 1px 4px rgba(22, 22, 26, .18);
+      cursor: ew-resize;
+    }
+
+    .graph-card .gc-scrub input[type="range"]::-moz-range-thumb {
+      width: 11px;
+      height: 11px;
+      border: 1.5px solid var(--accent);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(22, 22, 26, .18);
+      cursor: ew-resize;
+    }
+
     .graph-card .gc-hint {
       position: absolute;
       bottom: 18px;
@@ -1960,6 +2060,27 @@
       .graph-card {
         height: clamp(360px, 70vh, 640px);
       }
+
+      .graph-card .gc-views {
+        top: 10px;
+        right: 10px;
+      }
+
+      .graph-card .gc-view-btn {
+        padding: 5px 8px;
+        font-size: 9px;
+      }
+
+      /* on narrow cards the scrubber sits above the hint rather than beside it */
+      .graph-card .gc-scrub {
+        right: 10px;
+        bottom: 44px;
+        padding: 5px 10px;
+      }
+
+      .graph-card .gc-scrub input[type="range"] {
+        width: 88px;
+      }
     }
   </style>
 </head>
@@ -2080,7 +2201,7 @@
 
         <div class="graph-card">
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
-          <div class="gc-hint">hover keywords · click to pin</div>
+          <div class="gc-hint">click a node to open the paper · drag to rearrange</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
           <div class="gc-hover-panel" id="gc-hover-panel" aria-hidden="true"></div>
         </div>
@@ -3197,8 +3318,19 @@
         });
       });
     })();
+    /* ---------------- INTERACTIVE COGNITIVE-MAP CANVAS (card-bounded) ----------------
+       Three views of the same corpus, switchable from the toggle in the card:
 
-    /* ---------------- INTERACTIVE COGNITIVE-MAP CANVAS (card-bounded) ---------------- */
+         resolve  — the "entry state → derived state" transition. A tangled scribble
+                    settles into the paper/keyword structure. Scrubbing the slider (or
+                    just letting it run) morphs between the two.
+         states   — entry state and derived state side by side, the way the figure
+                    in the paper draws it: chaos on the left, resolved graph on the right.
+         field    — the resolved structure alone, drifting over a faint scribble ground.
+
+       Papers are the primary nodes; keywords are the smaller connective nodes between
+       them. Clicking either opens the popup and links through to Publications.
+    -------------------------------------------------------------------------------- */
     (() => {
       const canvas = document.getElementById('graph-canvas');
       const card = canvas.parentElement;
@@ -3216,10 +3348,29 @@
         label: 'rgba(22, 22, 26, 0.78)',
         labelHot: 'rgba(22, 22, 26, 1)',
         paperLabel: 'rgba(22, 22, 26, 1)',
+        scribble: 'rgba(124, 119, 155, 0.30)',
+      };
+
+      /* theme tint per research theme — drawn from the site palette */
+      const THEME_COLOR = {
+        'genai': '#609994',        /* --accent      mint sage   */
+        'interface': '#7c779b',    /* --accent-2    lavender    */
+        'workflow': '#7f8354',     /* --accent-3    olive       */
+        'design-space': '#8fccc7', /* --accent-soft pale mint   */
       };
 
       /* ===== Paper data (referenced by keywords) ===== */
       const PAPERS = {
+        advei: {
+          id: 'advei',
+          year: 2026,
+          venue: 'Adv. Eng. Inf. · 2026',
+          title: 'Cognitive Space Modeling &amp; Segment-based Design Generation',
+          short: 'Cognitive space modeling & segment-based design generation',
+          authors: 'Author list to be announced',
+          doi: '',
+          themes: ['genai', 'design-space'],
+        },
         bogen: {
           id: 'bogen',
           year: 2026,
@@ -3228,6 +3379,7 @@
           short: 'BOgen — Part-level 3D shape generation via preferential BO',
           authors: 'Seung Won Lee, <b>Jiin Choi</b>, Kyung Hoon Hyun',
           doi: 'https://www.nature.com/articles/s41598-026-38916-7',
+          themes: ['genai', 'design-space'],
         },
         genpara: {
           id: 'genpara',
@@ -3236,7 +3388,7 @@
           title: '<em>GenPara</em> — Enhancing the 3D Design Editing Process by Inferring Users\' Regions of Interest with Text-Conditional Shape Parameters',
           short: 'GenPara — 3D design editing via text-conditional shape parameters',
           authors: '<b>Jiin Choi</b>, Seung Won Lee, Kyung Hoon Hyun',
-          doi: 'https://doi.org/10.1145/3706598.3713487',
+          doi: 'https://doi.org/10.1145/3706598.3713502',
           selected: true,
           themes: ['genai', 'design-space', 'interface'],
           kws: ['3D Generative AI', 'Design Space', 'LLMs', 'Bayesian Inference', 'Human-AI Interaction'],
@@ -3249,6 +3401,7 @@
           short: 'CMLsearch — Semantic visual search for interior images',
           authors: 'Semin Jin†, <b>Jiin Choi</b>†, Kyung Hoon Hyun',
           doi: 'https://academic.oup.com/jcde',
+          themes: ['design-space'],
         },
         multimodal: {
           id: 'multimodal',
@@ -3270,6 +3423,7 @@
           short: 'Typeface Network — Quantitative principles of font pairing',
           authors: '<b>Jiin Choi</b>, Kyung Hoon Hyun',
           doi: 'https://doi.org/10.1038/s41598-024-81601-w',
+          themes: ['design-space'],
         },
         sketch: {
           id: 'sketch',
@@ -3279,6 +3433,7 @@
           short: 'Sketch vs. Prompt — How interaction modality shapes 3D design exploration',
           authors: 'Seung Won Lee, …, <b>Jiin Choi</b>, et al.',
           doi: 'https://dl.acm.org/doi/10.1145/3613904.3642218',
+          themes: ['genai', 'interface'],
         },
         canvas: {
           id: 'canvas',
@@ -3307,7 +3462,7 @@
         workflownet: {
           id: 'workflownet',
           year: 2026,
-          venue: 'ADR · 2026 (vol. 39, no. 2: 7–34)',
+          venue: 'ADR · 2026',
           title: '<em>Workflow-Net</em>: Toward Understanding Designer Workflows in Generative AI-Driven Systems through Comparing Node- and Prompt-Based Interfaces',
           short: 'Workflow-Net — Comparing node- and prompt-based interfaces for designer workflows',
           authors: 'Tae Hee Jo†, <b>Jiin Choi†</b>, Semin Jin, Seung Won Lee, Yugyeong Jang, Sang Woon Park, Seonghoon Ban, Kyung Hoon Hyun',
@@ -3319,19 +3474,17 @@
       };
 
       /* ===== Keyword → related papers ===== */
-      /* Each keyword can map to one or more paper IDs. The keyword appears as a
-         concept node; clicking it shows all related papers. */
       const KEYWORD_MAP = [
-        { word: 'design space', papers: ['bogen', 'genpara', 'sketch'] },
-        { word: 'intent', papers: ['bogen', 'genpara'] },
+        { word: 'design space', papers: ['bogen', 'genpara', 'sketch', 'advei'] },
+        { word: 'intent', papers: ['bogen', 'genpara', 'cogchat'] },
         { word: 'alignment', papers: ['genpara', 'bogen'] },
         { word: 'exploration', papers: ['sketch', 'genpara', 'bogen', 'canvas'] },
-        { word: 'GenAI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat'] },
-        { word: 'knowledge graph', papers: ['cogchat'] },
+        { word: 'GenAI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat', 'advei'] },
+        { word: 'knowledge graph', papers: ['cogchat', 'advei'] },
         { word: 'conversational AI', papers: ['cogchat'] },
-        { word: 'cognitive grounding', papers: ['cogchat'] },
+        { word: 'cognitive grounding', papers: ['cogchat', 'advei'] },
         { word: 'iterate', papers: ['genpara', 'bogen', 'canvas'] },
-        { word: 'semantic', papers: ['cmlsearch', 'typeface'] },
+        { word: 'semantic', papers: ['cmlsearch', 'typeface', 'advei'] },
         { word: 'multimodal', papers: ['multimodal'] },
         { word: 'inference', papers: ['bogen', 'genpara'] },
         { word: 'preferential BO', papers: ['bogen'] },
@@ -3348,71 +3501,175 @@
         { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas', 'cogchat'] },
         { word: 'LLM', papers: ['cogchat', 'genpara'] },
         { word: 'infinite canvas', papers: ['canvas'] },
+        { word: 'segmentation', papers: ['advei'] },
       ];
+
+      /* ===== View state ===== */
+      const VIEWS = ['resolve', 'states', 'field'];
+      let view = 'resolve';
+      /* resolution 0 = entry state (tangle) … 1 = derived state (structure) */
+      let resolveT = 0;
+      let autoResolve = true;      /* animate on its own until the user scrubs */
+      let scrubbing = false;
 
       let nodes = [];
       let edges = [];
+      let scribble = [];           /* the entry-state tangle, in normalised card space */
       const mouse = { x: -9999, y: -9999, active: false };
       let hoverIdx = -1;
-      let pinnedIdx = -1;          /* node index whose popup is currently shown */
+      let pinnedIdx = -1;
 
+      /* deterministic RNG so the layout is stable across redraws within a session */
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = a + 0x6D2B79F5 | 0;
+          let t = Math.imul(a ^ a >>> 15, 1 | a);
+          t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+      }
+
+      /* ---------- build the resolved (derived-state) layout ---------- */
       function build() {
-        const area = W * H;
-        const N = Math.min(KEYWORD_MAP.length, Math.max(10, Math.min(15, Math.round(area / 48000))));
+        const rand = mulberry32(20260901);
         nodes = [];
-
-        const minDist = Math.min(W, H) * 0.16;
-        const minDistSq = minDist * minDist;
-
-        const shuffled = KEYWORD_MAP.slice().sort(() => Math.random() - 0.5);
-
-        let idx = 0;
-        let attempts = 0;
-        while (nodes.length < N && idx < shuffled.length && attempts < N * 200) {
-          attempts++;
-          const x = 80 + Math.random() * (W - 160);
-          const y = 80 + Math.random() * (H - 160);
-          let ok = true;
-          for (const m of nodes) {
-            const dx = m.x - x, dy = m.y - y;
-            if (dx * dx + dy * dy < minDistSq) { ok = false; break; }
-          }
-          if (!ok) continue;
-
-          const entry = shuffled[idx++];
-          const r = Math.random();
-          nodes.push({
-            x, y,
-            vx: (Math.random() - 0.5) * 0.18,
-            vy: (Math.random() - 0.5) * 0.18,
-            ox: 0, oy: 0,
-            baseR: r < 0.5 ? 4 + Math.random() * 1.5 : 5.5 + Math.random() * 2,
-            color: r < 0.5 ? COLORS.nodeA : (r < 0.8 ? COLORS.nodeB : COLORS.nodeC),
-            label: entry.word,
-            papers: entry.papers,
-            phase: Math.random() * Math.PI * 2,
-          });
-        }
-
-        ctx.font = `italic 14px Fraunces, serif`;
-        for (const n of nodes) {
-          n.labelW = ctx.measureText(n.label).width;
-          n.labelLeft = (n.x + n.labelW + 30) > (W - 12);
-        }
-
-        /* k-NN edges */
         edges = [];
-        const K = 3;
-        for (let i = 0; i < nodes.length; i++) {
-          const dists = nodes.map((n, j) => ({
-            j, d: (n.x - nodes[i].x) ** 2 + (n.y - nodes[i].y) ** 2
-          })).filter(o => o.j !== i).sort((a, b) => a.d - b.d);
-          for (let k = 0; k < Math.min(K, dists.length); k++) {
-            const j = dists[k].j;
-            if (!edges.find(e => (e.a === i && e.b === j) || (e.a === j && e.b === i))) {
-              edges.push({ a: i, b: j });
-            }
+
+        const paperIds = Object.keys(PAPERS);
+
+        /* keywords worth drawing as connective nodes: those joining ≥2 papers,
+           plus a few single-paper ones so each paper has something attached. */
+        const kwPicked = KEYWORD_MAP.filter(k => k.papers.length >= 2);
+
+        /* --- geometry: papers on an ellipse ordered by year, keywords inside --- */
+        const isSplit = (view === 'states');
+        /* in split view the resolved graph occupies the right half */
+        const cx = isSplit ? W * 0.72 : W * 0.5;
+        const cy = H * 0.5;
+        const rx = (isSplit ? W * 0.22 : W * 0.34);
+        const ry = H * 0.34;
+
+        const sorted = paperIds.slice().sort((a, b) => {
+          const d = (PAPERS[b].year - PAPERS[a].year);
+          return d !== 0 ? d : a.localeCompare(b);
+        });
+
+        sorted.forEach((pid, i) => {
+          const p = PAPERS[pid];
+          const ang = (i / sorted.length) * Math.PI * 2 - Math.PI / 2;
+          const jitter = 0.86 + rand() * 0.28;
+          nodes.push({
+            kind: 'paper',
+            id: pid,
+            label: p.short.split('—')[0].trim(),
+            papers: [pid],
+            tx: cx + Math.cos(ang) * rx * jitter,
+            ty: cy + Math.sin(ang) * ry * jitter,
+            x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
+            baseR: p.selected ? 7.5 : 6,
+            color: THEME_COLOR[(p.themes && p.themes[0]) || 'genai'] || COLORS.nodeA,
+            phase: rand() * Math.PI * 2,
+            seedA: rand() * Math.PI * 2,
+            seedB: rand() * Math.PI * 2,
+          });
+        });
+
+        /* keywords sit at the centroid of the papers they connect, pulled inward */
+        kwPicked.forEach((k) => {
+          const rel = k.papers.filter(pid => PAPERS[pid]);
+          if (!rel.length) return;
+          let sx = 0, sy = 0, n = 0;
+          for (const pid of rel) {
+            const pn = nodes.find(o => o.kind === 'paper' && o.id === pid);
+            if (pn) { sx += pn.tx; sy += pn.ty; n++; }
           }
+          if (!n) return;
+          const mx = sx / n, my = sy / n;
+          /* pull toward the centre so keywords form the inner web */
+          const pull = 0.34;
+          nodes.push({
+            kind: 'kw',
+            id: 'kw:' + k.word,
+            label: k.word,
+            papers: rel,
+            tx: mx + (cx - mx) * pull + (rand() - 0.5) * 34,
+            ty: my + (cy - my) * pull + (rand() - 0.5) * 34,
+            x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
+            baseR: 3.2 + Math.min(rel.length, 5) * 0.42,
+            color: COLORS.nodeB,
+            phase: rand() * Math.PI * 2,
+            seedA: rand() * Math.PI * 2,
+            seedB: rand() * Math.PI * 2,
+          });
+        });
+
+        /* edges: keyword → each paper it links */
+        const idxOf = new Map(nodes.map((n, i) => [n.id, i]));
+        for (const n of nodes) {
+          if (n.kind !== 'kw') continue;
+          const a = idxOf.get(n.id);
+          for (const pid of n.papers) {
+            const b = idxOf.get(pid);
+            if (b === undefined) continue;
+            edges.push({ a, b, w: 0.9 });
+          }
+        }
+
+        /* start positions: scattered along the tangle so "resolve" has somewhere to come from */
+        for (const n of nodes) {
+          const a = rand() * Math.PI * 2;
+          const rr = 0.16 + rand() * 0.30;
+          const ex = (isSplit ? W * 0.26 : W * 0.5) + Math.cos(a) * rx * rr * 1.5;
+          const ey = cy + Math.sin(a) * ry * rr * 1.5;
+          n.ex = ex; n.ey = ey;      /* entry-state position */
+          n.x = ex; n.y = ey;
+        }
+
+        buildScribble(rand, isSplit);
+        measureLabels();
+      }
+
+      /* ---------- the entry-state tangle ----------
+         A few long, looping polylines — the "scribble" of the figure. Points are
+         generated once in card space and redrawn each frame with a slow drift. */
+      function buildScribble(rand, isSplit) {
+        scribble = [];
+        const cx = isSplit ? W * 0.26 : W * 0.5;
+        const cy = H * 0.5;
+        const spanX = (isSplit ? W * 0.20 : W * 0.30);
+        const spanY = H * 0.30;
+
+        const STROKES = isSplit ? 7 : 9;
+        for (let s = 0; s < STROKES; s++) {
+          const pts = [];
+          const STEPS = 150;
+          /* each stroke is a wandering lissajous — dense in the middle, loose at the edges */
+          const f1 = 1.6 + rand() * 3.4;
+          const f2 = 1.6 + rand() * 3.4;
+          const p1 = rand() * Math.PI * 2;
+          const p2 = rand() * Math.PI * 2;
+          const amp = 0.55 + rand() * 0.5;
+          const drift = rand() * Math.PI * 2;
+          for (let i = 0; i <= STEPS; i++) {
+            const u = i / STEPS;
+            const decay = 0.45 + 0.55 * Math.sin(u * Math.PI);   /* taper the ends */
+            const x = cx + Math.sin(u * Math.PI * 2 * f1 + p1) * spanX * amp * decay
+              + Math.cos(u * Math.PI * 2 * (f1 * 0.5) + p2) * spanX * 0.22 * decay;
+            const y = cy + Math.cos(u * Math.PI * 2 * f2 + p2) * spanY * amp * decay
+              + Math.sin(u * Math.PI * 2 * (f2 * 0.5) + p1) * spanY * 0.22 * decay;
+            pts.push({ x, y });
+          }
+          scribble.push({ pts, drift, speed: 0.25 + rand() * 0.5 });
+        }
+      }
+
+      function measureLabels() {
+        for (const n of nodes) {
+          ctx.font = n.kind === 'paper'
+            ? `italic 500 13.5px Fraunces, serif`
+            : `italic 12px Fraunces, serif`;
+          n.labelW = ctx.measureText(n.label).width;
+          n.labelLeft = (n.tx + n.labelW + 30) > (W - 12);
         }
       }
 
@@ -3434,26 +3691,23 @@
         const ro = new ResizeObserver(resize);
         ro.observe(card);
       }
-      resize();
 
       /* ----- node hit-test (includes label area for easier clicks) ----- */
       function nodeAt(mx, my) {
         for (let i = nodes.length - 1; i >= 0; i--) {
           const n = nodes[i];
-          const x = n.x;
-          const y = n.y;
-          /* dot hit */
-          const dx = mx - x, dy = my - y;
-          if (dx * dx + dy * dy < 14 * 14) return i;
-          /* label hit (rectangular) */
+          if (n.alpha !== undefined && n.alpha < 0.25) continue;   /* not visible yet */
+          const x = n.dx !== undefined ? n.dx : n.x;
+          const y = n.dy !== undefined ? n.dy : n.y;
+          const hit = n.kind === 'paper' ? 16 : 12;
+          const ddx = mx - x, ddy = my - y;
+          if (ddx * ddx + ddy * ddy < hit * hit) return i;
           if (n.label && n.labelW) {
             const padY = 10;
             if (n.labelLeft) {
-              /* label is to the LEFT of the node */
               if (mx >= x - n.labelW - n.baseR - 12 && mx <= x - n.baseR - 4 &&
                 my >= y - padY && my <= y + padY) return i;
             } else {
-              /* label is to the RIGHT */
               if (mx >= x + n.baseR + 4 && mx <= x + n.baseR + n.labelW + 12 &&
                 my >= y - padY && my <= y + padY) return i;
             }
@@ -3479,18 +3733,19 @@
         </button>`;
         }).join('');
 
+        const isPaper = n.kind === 'paper';
         popup.innerHTML = `
       <button class="pp-close" aria-label="close">×</button>
       <div class="pp-keyword">
-        <span class="pp-keyword-label">keyword</span>
+        <span class="pp-keyword-label">${isPaper ? 'publication' : 'keyword'}</span>
         <span class="pp-keyword-word">${n.label}</span>
       </div>
-      <div class="pp-count">${n.papers.length} related publication${n.papers.length > 1 ? 's' : ''}</div>
+      <div class="pp-count">${isPaper ? 'open in publications' : n.papers.length + ' related publication' + (n.papers.length > 1 ? 's' : '')}</div>
       <div class="pp-items">${items}</div>
     `;
         positionPopup(idx);
         popup.classList.add('open');
-        if (typeof updateHoverPanel === 'function') updateHoverPanel();
+        updateHoverPanel();
 
         popup.querySelector('.pp-close').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -3518,14 +3773,14 @@
       function closePopup() {
         popup.classList.remove('open');
         pinnedIdx = -1;
-        if (typeof updateHoverPanel === 'function') updateHoverPanel();
+        updateHoverPanel();
       }
 
       function positionPopup(idx) {
         const n = nodes[idx];
-        const x = n.x;
-        const y = n.y;
-        /* popup width: shrink if card is narrow so it always fits */
+        if (!n) return;
+        const x = n.dx !== undefined ? n.dx : n.x;
+        const y = n.dy !== undefined ? n.dy : n.y;
         const popW = Math.min(320, Math.max(220, W - 24));
         popup.style.width = popW + 'px';
         const popH = popup.offsetHeight || 240;
@@ -3533,34 +3788,21 @@
         const gap = 14;
 
         let px, py, side;
-
-        /* Try: above-centered → below-centered → left-of-node → right-of-node */
         const fitsAbove = (y - gap - popH) >= margin;
         const fitsBelow = (y + gap + popH) <= (H - margin);
 
         if (fitsAbove) {
-          px = x - popW / 2;
-          py = y - gap - popH;
-          side = 'top';
+          px = x - popW / 2; py = y - gap - popH; side = 'top';
         } else if (fitsBelow) {
-          px = x - popW / 2;
-          py = y + gap;
-          side = 'bottom';
+          px = x - popW / 2; py = y + gap; side = 'bottom';
         } else {
-          /* place beside the node — prefer whichever side has more room */
           const roomLeft = x - margin;
           const roomRight = W - x - margin;
-          if (roomLeft > roomRight) {
-            px = x - gap - popW;
-            side = 'left';
-          } else {
-            px = x + gap;
-            side = 'right';
-          }
+          if (roomLeft > roomRight) { px = x - gap - popW; side = 'left'; }
+          else { px = x + gap; side = 'right'; }
           py = y - popH / 2;
         }
 
-        /* final clamp so it never escapes the card */
         px = Math.max(margin, Math.min(W - popW - margin, px));
         py = Math.max(margin, Math.min(H - popH - margin, py));
 
@@ -3569,11 +3811,87 @@
         popup.dataset.side = side;
       }
 
+      /* ----- view switching ----- */
+      function setView(v) {
+        if (!VIEWS.includes(v) || v === view) return;
+        view = v;
+        card.dataset.view = v;
+        closePopup();
+        hoverIdx = -1;
+        if (v === 'field') { resolveT = 1; autoResolve = false; }
+        else if (v === 'resolve') { resolveT = 0; autoResolve = true; }
+        else { resolveT = 1; autoResolve = false; }
+        build();
+        syncControls();
+      }
+
+      function syncControls() {
+        card.querySelectorAll('.gc-view-btn').forEach(b => {
+          b.classList.toggle('is-on', b.dataset.view === view);
+          b.setAttribute('aria-pressed', String(b.dataset.view === view));
+        });
+        const scrub = card.querySelector('.gc-scrub');
+        if (scrub) {
+          scrub.hidden = (view !== 'resolve');
+          const range = scrub.querySelector('input');
+          if (range && !scrubbing) range.value = String(Math.round(resolveT * 100));
+        }
+      }
+
+      /* build the control strip */
+      (function mountControls() {
+        const bar = document.createElement('div');
+        bar.className = 'gc-views';
+        bar.innerHTML = `
+          <button class="gc-view-btn is-on" data-view="resolve" aria-pressed="true" title="Entry state resolving into structure">resolve</button>
+          <button class="gc-view-btn" data-view="states" aria-pressed="false" title="Entry state and derived state, side by side">states</button>
+          <button class="gc-view-btn" data-view="field" aria-pressed="false" title="The resolved structure alone">field</button>
+        `;
+        card.appendChild(bar);
+
+        const scrub = document.createElement('div');
+        scrub.className = 'gc-scrub';
+        scrub.innerHTML = `
+          <span class="gcs-end">entry</span>
+          <input type="range" min="0" max="100" value="0" aria-label="Resolve the entry state into structure" />
+          <span class="gcs-end">derived</span>
+        `;
+        card.appendChild(scrub);
+
+        bar.addEventListener('click', (e) => {
+          const btn = e.target.closest('.gc-view-btn');
+          if (!btn) return;
+          e.stopPropagation();
+          setView(btn.dataset.view);
+        });
+
+        const range = scrub.querySelector('input');
+        const onScrub = () => {
+          scrubbing = true;
+          autoResolve = false;
+          resolveT = Number(range.value) / 100;
+        };
+        range.addEventListener('input', onScrub);
+        range.addEventListener('change', () => { scrubbing = false; });
+        /* keep clicks on the slider from reaching the card (which closes popups) */
+        scrub.addEventListener('click', e => e.stopPropagation());
+        scrub.addEventListener('mousedown', e => e.stopPropagation());
+        scrub.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+      })();
+
+      card.dataset.view = view;
+      resize();
+      syncControls();
+
       /* ----- mouse handlers (with drag) ----- */
       let dragIdx = -1;
       let dragMoved = false;
       let pressStartX = 0, pressStartY = 0;
-      const DRAG_THRESHOLD = 4;  /* px before a press becomes a drag */
+      const DRAG_THRESHOLD = 4;
+
+      function inControls(target) {
+        return !!(target.closest && (target.closest('.gc-views') || target.closest('.gc-scrub')));
+      }
 
       card.addEventListener('mousemove', (e) => {
         const rect = card.getBoundingClientRect();
@@ -3581,7 +3899,6 @@
         mouse.y = e.clientY - rect.top;
         mouse.active = true;
 
-        /* if dragging a node, move it (& zero out velocity) */
         if (dragIdx >= 0) {
           const n = nodes[dragIdx];
           if (!dragMoved) {
@@ -3590,31 +3907,27 @@
             if (dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) {
               dragMoved = true;
               card.classList.add('is-dragging');
-              /* close popup while actively dragging */
               if (pinnedIdx === dragIdx) closePopup();
             }
           }
           if (dragMoved) {
-            n.x = mouse.x;
-            n.y = mouse.y;
+            /* dragging retargets the node's resolved position */
+            n.tx = mouse.x; n.ty = mouse.y;
+            n.x = mouse.x; n.y = mouse.y;
             n.vx = 0; n.vy = 0;
           }
           return;
         }
 
-        /* normal hover */
         const prev = hoverIdx;
         hoverIdx = nodeAt(mouse.x, mouse.y);
-        if (hoverIdx >= 0) {
-          card.classList.add('has-pointer');
-        } else {
-          card.classList.remove('has-pointer');
-        }
+        if (hoverIdx >= 0) card.classList.add('has-pointer');
+        else card.classList.remove('has-pointer');
         if (hoverIdx !== prev) updateHoverPanel();
       });
 
       card.addEventListener('mousedown', (e) => {
-        if (popup.contains(e.target)) return;
+        if (popup.contains(e.target) || inControls(e.target)) return;
         const rect = card.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -3627,7 +3940,6 @@
         }
       });
 
-      /* mouseup on window so dragging continues even if cursor leaves card briefly */
       window.addEventListener('mouseup', (e) => {
         if (dragIdx < 0) return;
         const wasDrag = dragMoved;
@@ -3635,27 +3947,20 @@
         dragIdx = -1;
         dragMoved = false;
         card.classList.remove('is-dragging');
-        /* if it was a click (no drag), open popup */
         if (!wasDrag && idx >= 0) {
           const rect = card.getBoundingClientRect();
           const mx = e.clientX - rect.left;
           const my = e.clientY - rect.top;
-          /* confirm cursor still on the same node */
-          if (nodeAt(mx, my) === idx) {
-            openPopup(idx);
-          }
+          if (nodeAt(mx, my) === idx) openPopup(idx);
         }
       });
 
-      /* clicking empty area closes popup */
       card.addEventListener('click', (e) => {
-        if (popup.contains(e.target)) return;
+        if (popup.contains(e.target) || inControls(e.target)) return;
         const rect = card.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
-        if (nodeAt(mx, my) < 0) {
-          closePopup();
-        }
+        if (nodeAt(mx, my) < 0) closePopup();
       });
 
       card.addEventListener('mouseleave', () => {
@@ -3666,19 +3971,17 @@
         updateHoverPanel();
       });
 
-      /* touch — supports both tap (popup) and drag (move node) */
+      /* touch — tap opens, drag moves */
       card.addEventListener('touchstart', (e) => {
-        if (e.touches[0]) {
+        if (e.touches[0] && !inControls(e.target)) {
           const rect = card.getBoundingClientRect();
           const tx = e.touches[0].clientX - rect.left;
           const ty = e.touches[0].clientY - rect.top;
           mouse.x = tx; mouse.y = ty; mouse.active = true;
           const idx = nodeAt(tx, ty);
           if (idx >= 0) {
-            dragIdx = idx;
-            dragMoved = false;
-            pressStartX = tx;
-            pressStartY = ty;
+            dragIdx = idx; dragMoved = false;
+            pressStartX = tx; pressStartY = ty;
           }
         }
       }, { passive: true });
@@ -3700,102 +4003,161 @@
             }
           }
           if (dragMoved) {
+            n.tx = tx; n.ty = ty;
             n.x = tx; n.y = ty;
             n.vx = 0; n.vy = 0;
           }
         }
       }, { passive: true });
 
-      card.addEventListener('touchend', (e) => {
+      card.addEventListener('touchend', () => {
         if (dragIdx >= 0) {
           const wasDrag = dragMoved;
           const idx = dragIdx;
-          dragIdx = -1;
-          dragMoved = false;
-          if (!wasDrag && idx >= 0) {
-            openPopup(idx);
-          }
+          dragIdx = -1; dragMoved = false;
+          if (!wasDrag && idx >= 0) openPopup(idx);
         }
         mouse.active = false;
         mouse.x = -9999; mouse.y = -9999;
       });
 
-      /* esc closes popup */
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closePopup();
       });
+
+      /* ----- easing ----- */
+      const easeInOut = (u) => u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
 
       /* ----- main render loop ----- */
       let t = 0;
       function tick() {
         t += 0.008;
         ctx.clearRect(0, 0, W, H);
-        const activeIdx = pinnedIdx >= 0 ? pinnedIdx : hoverIdx;
 
+        /* advance the resolve animation */
+        if (view === 'resolve' && autoResolve) {
+          /* hold at the tangle briefly, resolve, hold, then loop back */
+          const CYCLE = 15;                       /* seconds per full cycle    */
+          const u = (t * 1.0 / CYCLE) % 1;
+          const seg = u < 0.10 ? 0
+            : u < 0.45 ? (u - 0.10) / 0.35
+              : u < 0.80 ? 1
+                : 1 - (u - 0.80) / 0.20;
+          resolveT = easeInOut(Math.max(0, Math.min(1, seg)));
+        }
+
+        const activeIdx = pinnedIdx >= 0 ? pinnedIdx : hoverIdx;
+        /* how strongly the structure is shown, per view */
+        const structure = (view === 'states') ? 1 : resolveT;
+        /* tangle opacity */
+        const tangle = (view === 'field') ? 0.14
+          : (view === 'states') ? 1
+            : (1 - resolveT);
+
+        /* ---------- entry-state scribble ---------- */
+        if (tangle > 0.01) {
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          for (let si = 0; si < scribble.length; si++) {
+            const s = scribble[si];
+            const wob = Math.sin(t * 0.5 * s.speed + s.drift) * 6;
+            const wob2 = Math.cos(t * 0.42 * s.speed + s.drift * 1.3) * 6;
+            /* as it resolves, the scribble both fades and unwinds toward a flat line */
+            const unwind = (view === 'states') ? 0 : resolveT;
+            ctx.beginPath();
+            for (let i = 0; i < s.pts.length; i++) {
+              const p = s.pts[i];
+              const u = i / (s.pts.length - 1);
+              const fx = p.x + Math.sin(t * 0.6 + u * 7 + s.drift) * wob * 0.5;
+              const fy = p.y + Math.cos(t * 0.55 + u * 6 + s.drift) * wob2 * 0.5;
+              /* unwound target: a calm horizontal trace */
+              const ux = (view === 'states' ? W * 0.26 : W * 0.5) + (u - 0.5) * W * 0.44;
+              const uy = H * 0.5 + Math.sin(u * Math.PI * 2 + si) * 2;
+              const x = fx + (ux - fx) * unwind;
+              const y = fy + (uy - fy) * unwind;
+              if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            const a = 0.30 * tangle * (0.55 + 0.45 * Math.sin(t * 0.4 + si));
+            ctx.strokeStyle = `rgba(124, 119, 155, ${Math.max(0.04, a).toFixed(3)})`;
+            ctx.lineWidth = 0.85;
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        /* ---------- physics on the resolved structure ---------- */
         for (let i = 0; i < nodes.length; i++) {
           const n = nodes[i];
-          n.x += n.vx;
-          n.y += n.vy;
 
-          /* layered wobble — barely-perceptible drift */
+          /* drift around the resolved target */
           const wob1 = Math.sin(t * 0.18 + n.phase);
           const wob2 = Math.cos(t * 0.26 + n.phase * 0.7);
-          n.vx += wob1 * 0.0015;
-          n.vy += wob2 * 0.0015;
-          /* almost-imperceptible jitter so motion never settles into a loop */
-          n.vx += (Math.random() - 0.5) * 0.002;
-          n.vy += (Math.random() - 0.5) * 0.002;
+          const driftX = wob1 * 5.5;
+          const driftY = wob2 * 5.5;
 
-          /* soft mutual repulsion only — keeps the field spread out, no convergence */
+          /* spring toward target (structure) or entry position (tangle) */
+          const gx = n.ex + (n.tx + driftX - n.ex) * structure;
+          const gy = n.ey + (n.ty + driftY - n.ey) * structure;
+
+          n.vx += (gx - n.x) * 0.020;
+          n.vy += (gy - n.y) * 0.020;
+
+          /* soft mutual repulsion so labels don't collide */
           for (let j = 0; j < nodes.length; j++) {
             if (j === i) continue;
             const m = nodes[j];
             const dx = n.x - m.x, dy = n.y - m.y;
             const d2 = dx * dx + dy * dy;
-            if (d2 > 14000 || d2 < 1) continue;
+            if (d2 > 9000 || d2 < 1) continue;
             const d = Math.sqrt(d2);
-            const push = 0.025 / d;
+            const push = 0.34 / d;
             n.vx += (dx / d) * push;
             n.vy += (dy / d) * push;
           }
 
-          n.vx *= 0.94; n.vy *= 0.94;
-          /* speed cap so the drift stays barely-there */
+          n.vx *= 0.86; n.vy *= 0.86;
           const sp = Math.hypot(n.vx, n.vy);
-          if (sp > 0.18) { n.vx = (n.vx / sp) * 0.18; n.vy = (n.vy / sp) * 0.18; }
+          if (sp > 3.2) { n.vx = (n.vx / sp) * 3.2; n.vy = (n.vy / sp) * 3.2; }
+          n.x += n.vx; n.y += n.vy;
 
-          const pad = 24;
-          if (n.x < pad) { n.x = pad; n.vx *= -1; }
-          if (n.x > W - pad) { n.x = W - pad; n.vx *= -1; }
-          if (n.y < pad) { n.y = pad; n.vy *= -1; }
-          if (n.y > H - pad) { n.y = H - pad; n.vy *= -1; }
+          const pad = 26;
+          n.x = Math.max(pad, Math.min(W - pad, n.x));
+          n.y = Math.max(pad, Math.min(H - pad, n.y));
 
-          /* subtle mouse-repulsion: nodes near cursor drift gently away */
+          /* cursor repulsion */
           if (mouse.active) {
-            const dx = n.x - mouse.x;
-            const dy = n.y - mouse.y;
+            const dx = n.x - mouse.x, dy = n.y - mouse.y;
             const d2 = dx * dx + dy * dy;
             const REACH = 110;
             if (d2 < REACH * REACH && d2 > 0.01) {
               const d = Math.sqrt(d2);
               const f = (1 - d / REACH);
-              const k = 8 * f * f;     /* offset magnitude (px) */
+              const k = 8 * f * f;
               n.ox = (dx / d) * k;
               n.oy = (dy / d) * k;
-            } else {
-              n.ox *= 0.9; n.oy *= 0.9;
-            }
+            } else { n.ox *= 0.9; n.oy *= 0.9; }
+          } else { n.ox *= 0.9; n.oy *= 0.9; }
+
+          n.dx = n.x + n.ox;
+          n.dy = n.y + n.oy;
+          /* Papers stay present the whole way through — they are the thing being
+             resolved, not something that appears at the end — so they only dim
+             toward the tangle. Keywords are the derived structure, so they fade
+             in as the resolution progresses. */
+          if (view === 'states') {
+            n.alpha = 1;
+          } else if (n.kind === 'paper') {
+            n.alpha = 0.42 + 0.58 * structure;
           } else {
-            n.ox *= 0.9; n.oy *= 0.9;
+            const lead = 0.30;
+            n.alpha = Math.max(0, Math.min(1, (structure - lead) / (1 - lead)));
           }
         }
 
-        /* if a popup is pinned, follow its node */
-        if (pinnedIdx >= 0 && nodes[pinnedIdx]) {
-          positionPopup(pinnedIdx);
-        }
+        if (pinnedIdx >= 0 && nodes[pinnedIdx]) positionPopup(pinnedIdx);
 
-        /* ----- ASCII dot grid: subtle drift, denser near cursor ----- */
+        /* ---------- ASCII dot grid ---------- */
         {
           const STEP = 22;
           ctx.font = `9px 'JetBrains Mono', monospace`;
@@ -3810,8 +4172,7 @@
 
               let near = 0;
               if (mouse.active) {
-                const dx = gx - mouse.x;
-                const dy = gy - mouse.y;
+                const dx = gx - mouse.x, dy = gy - mouse.y;
                 const d2 = dx * dx + dy * dy;
                 const R = 130;
                 if (d2 < R * R) near = 1 - Math.sqrt(d2) / R;
@@ -3826,8 +4187,8 @@
                 : `rgba(74, 74, 82, ${a.toFixed(3)})`;
 
               const glyphs = near > 0.5 ? '*+·' : (near > 0.15 ? '·+·' : '·');
-              const idx = Math.floor(t * 3 + phase * 2) % glyphs.length;
-              const g = glyphs[(idx + glyphs.length) % glyphs.length];
+              const gi = Math.floor(t * 3 + phase * 2) % glyphs.length;
+              const g = glyphs[(gi + glyphs.length) % glyphs.length];
 
               ctx.fillText(g, gx + totalOx, gy + totalOy);
             }
@@ -3836,38 +4197,63 @@
           ctx.textBaseline = 'alphabetic';
         }
 
-        /* edges */
+        /* ---------- state captions (split view) ---------- */
+        if (view === 'states') {
+          ctx.save();
+          ctx.font = `500 10px 'JetBrains Mono', monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(154, 154, 160, 0.95)';
+          ctx.setLineDash([]);
+          const capY = 26;
+          ctx.fillText('E N T R Y   S T A T E', W * 0.26, capY);
+          ctx.fillText('D E R I V E D   S T A T E', W * 0.72, capY);
+          /* the connective arc between the two clouds */
+          ctx.beginPath();
+          ctx.moveTo(W * 0.26 + W * 0.13, H * 0.5);
+          ctx.bezierCurveTo(W * 0.46, H * 0.30, W * 0.52, H * 0.30, W * 0.72 - W * 0.15, H * 0.5);
+          ctx.strokeStyle = 'rgba(96, 153, 148, 0.32)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.textAlign = 'left';
+          ctx.restore();
+        }
+
+        /* ---------- edges ---------- */
         ctx.lineWidth = 0.9;
         for (const e of edges) {
           const a = nodes[e.a], b = nodes[e.b];
-          const ax = a.x + a.ox, ay = a.y + a.oy;
-          const bx = b.x + b.ox, by = b.y + b.oy;
-
+          if (!a || !b) continue;
+          const ea = Math.min(a.alpha, b.alpha);
+          if (ea <= 0.02) continue;
           const incident = (e.a === activeIdx || e.b === activeIdx);
           ctx.strokeStyle = incident
-            ? 'rgba(96, 153, 148, 0.55)'
-            : COLORS.edge;
+            ? `rgba(96, 153, 148, ${(0.55 * ea).toFixed(3)})`
+            : `rgba(120, 115, 135, ${(0.22 * ea).toFixed(3)})`;
           ctx.beginPath();
-          ctx.moveTo(ax, ay);
-          ctx.lineTo(bx, by);
+          ctx.moveTo(a.dx, a.dy);
+          ctx.lineTo(b.dx, b.dy);
           ctx.stroke();
         }
 
-        /* nodes */
+        /* ---------- nodes ---------- */
         for (let i = 0; i < nodes.length; i++) {
           const n = nodes[i];
-          const x = n.x + n.ox;
-          const y = n.y + n.oy;
+          if (n.alpha <= 0.02) continue;
+          const x = n.dx, y = n.dy;
+          const A = n.alpha;
 
           const isHover = (i === hoverIdx);
           const isPinned = (i === pinnedIdx);
+          const isPaper = n.kind === 'paper';
 
-          /* ambient glow on every node — soft, dreamy */
+          /* ambient glow */
           {
-            const ambR = 18 + Math.sin(t * 0.8 + n.phase) * 1.5;
+            const ambR = (isPaper ? 21 : 15) + Math.sin(t * 0.8 + n.phase) * 1.5;
             const ambGr = ctx.createRadialGradient(x, y, 0, x, y, ambR);
-            ambGr.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
-            ambGr.addColorStop(0.5, 'rgba(255, 255, 255, 0.18)');
+            ambGr.addColorStop(0, `rgba(255, 255, 255, ${(0.55 * A).toFixed(3)})`);
+            ambGr.addColorStop(0.5, `rgba(255, 255, 255, ${(0.18 * A).toFixed(3)})`);
             ambGr.addColorStop(1, 'rgba(255, 255, 255, 0)');
             ctx.fillStyle = ambGr;
             ctx.beginPath();
@@ -3875,12 +4261,11 @@
             ctx.fill();
           }
 
-          /* halo on hover/pinned */
           if (isHover || isPinned) {
-            const intensity = isPinned ? 0.45 : 0.30;
+            const intensity = (isPinned ? 0.45 : 0.30) * A;
             const haloR = 28 + (isPinned ? 10 : 6);
             const gr = ctx.createRadialGradient(x, y, 0, x, y, haloR);
-            gr.addColorStop(0, `rgba(96, 153, 148, ${intensity})`);
+            gr.addColorStop(0, `rgba(96, 153, 148, ${intensity.toFixed(3)})`);
             gr.addColorStop(1, 'rgba(96, 153, 148, 0)');
             ctx.fillStyle = gr;
             ctx.beginPath();
@@ -3888,9 +4273,8 @@
             ctx.fill();
           }
 
-          /* pinned ring */
           if (isPinned) {
-            ctx.strokeStyle = 'rgba(96, 153, 148, 0.85)';
+            ctx.strokeStyle = `rgba(96, 153, 148, ${(0.85 * A).toFixed(3)})`;
             ctx.lineWidth = 1.4;
             ctx.beginPath();
             ctx.arc(x, y, n.baseR + 5, 0, Math.PI * 2);
@@ -3899,12 +4283,22 @@
           }
 
           const r = n.baseR + Math.sin(t * 1.2 + n.phase) * 0.5 + (isHover ? 1.4 : 0);
-          ctx.fillStyle = isHover || isPinned ? COLORS.paper : n.color;
+
+          ctx.globalAlpha = A;
+          ctx.fillStyle = (isHover || isPinned) ? COLORS.paper : n.color;
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
 
-          /* tiny inner highlight on the node — gives it a "lit from above" feel */
+          /* papers carry a thin ring so they read as the primary tier */
+          if (isPaper) {
+            ctx.strokeStyle = `rgba(22, 22, 26, ${(0.16 * A).toFixed(3)})`;
+            ctx.lineWidth = 0.9;
+            ctx.beginPath();
+            ctx.arc(x, y, r + 2.6, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
           const hi = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
           hi.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
           hi.addColorStop(0.7, 'rgba(255, 255, 255, 0)');
@@ -3912,13 +4306,18 @@
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
+          ctx.globalAlpha = 1;
 
-          /* label */
-          if (n.label) {
-            const fs = 14 + (isHover ? 1.5 : 0);
-            const weight = (isHover || isPinned) ? '500' : '400';
+          /* label — papers always, keywords once mostly resolved or on hover */
+          const showLabel = isPaper || isHover || isPinned || A > 0.85;
+          if (n.label && showLabel) {
+            const la = isPaper ? A : A * (isHover || isPinned ? 1 : 0.9);
+            const fs = (isPaper ? 13.5 : 12) + (isHover ? 1.5 : 0);
+            const weight = (isHover || isPinned || isPaper) ? '500' : '400';
             ctx.font = `italic ${weight} ${fs}px Fraunces, serif`;
-            ctx.fillStyle = (isHover || isPinned) ? COLORS.labelHot : COLORS.label;
+            ctx.fillStyle = (isHover || isPinned)
+              ? `rgba(22, 22, 26, ${la.toFixed(3)})`
+              : `rgba(22, 22, 26, ${(0.78 * la).toFixed(3)})`;
 
             if (n.labelLeft) {
               ctx.textAlign = 'right';
@@ -3933,14 +4332,10 @@
         requestAnimationFrame(tick);
       }
 
-      /* ===== Hover side-panel (keywords mode) ===== */
+      /* ===== Hover side-panel ===== */
       function updateHoverPanel() {
         if (!hoverPanel) return;
-        if (card.dataset.view !== 'keywords' || pinnedIdx >= 0) {
-          hoverPanel.classList.remove('show');
-          return;
-        }
-        if (hoverIdx < 0) {
+        if (pinnedIdx >= 0 || hoverIdx < 0) {
           hoverPanel.classList.remove('show');
           return;
         }
@@ -3958,7 +4353,7 @@
           </span>`;
         }).join('');
         hoverPanel.innerHTML = `
-          <div class="ghp-label">keyword</div>
+          <div class="ghp-label">${n.kind === 'paper' ? 'publication' : 'keyword'}</div>
           <div class="ghp-word">${n.label}</div>
           ${items}
         `;
