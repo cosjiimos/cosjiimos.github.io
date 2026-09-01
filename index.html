@@ -3247,7 +3247,7 @@
           venue: 'Adv. Eng. Inf. · 2026',
           title: 'Cognitive Space Modeling &amp; Segment-based Design Generation',
           short: 'Cognitive space modeling & segment-based design generation',
-          node: 'Cognitive Space',
+          node: 'GenAlign',
           authors: 'Author list to be announced',
           doi: '',
           themes: ['genai', 'design-space'],
@@ -3636,11 +3636,12 @@
 
       function measureLabels() {
         for (const n of nodes) {
+          /* must match the fonts used in the draw pass, since the hit-boxes below
+             are derived from these widths */
           ctx.font = n.kind === 'paper'
-            ? `italic 500 13.5px Fraunces, serif`
-            : `italic 12px Fraunces, serif`;
+            ? `italic 500 12.5px Fraunces, Lora, serif`
+            : `italic 400 13px Fraunces, Lora, serif`;
           n.labelW = ctx.measureText(n.label).width;
-          n.labelLeft = (n.tx + n.labelW + 30) > (W - 12);
         }
       }
 
@@ -3665,22 +3666,32 @@
 
       /* ----- node hit-test (includes label area for easier clicks) ----- */
       function nodeAt(mx, my) {
-        for (let i = nodes.length - 1; i >= 0; i--) {
+        /* Keywords are the labelled tier and sit on top, so test them first — a paper
+           mark on the line must never steal a hover from the word above it. */
+        const order = nodes
+          .map((n, i) => i)
+          .sort((a, b) => (nodes[a].kind === 'kw' ? 1 : 0) - (nodes[b].kind === 'kw' ? 1 : 0));
+
+        for (let k = order.length - 1; k >= 0; k--) {
+          const i = order[k];
           const n = nodes[i];
           const x = n.dx !== undefined ? n.dx : n.x;
           const y = n.dy !== undefined ? n.dy : n.y;
-          const hit = n.kind === 'paper' ? (n.baseR || 32) : 12;
+
+          /* the dot itself — paper marks are small, so give them a generous target */
+          const hit = n.kind === 'paper' ? Math.max(11, n.baseR + 6) : Math.max(13, n.baseR + 7);
           const ddx = mx - x, ddy = my - y;
           if (ddx * ddx + ddy * ddy < hit * hit) return i;
-          if (n.label && n.labelW) {
-            const padY = 10;
-            if (n.labelLeft) {
-              if (mx >= x - n.labelW - n.baseR - 12 && mx <= x - n.baseR - 4 &&
-                my >= y - padY && my <= y + padY) return i;
-            } else {
-              if (mx >= x + n.baseR + 4 && mx <= x + n.baseR + n.labelW + 12 &&
-                my >= y - padY && my <= y + padY) return i;
-            }
+
+          /* Keyword labels are painted centred, below the dot when the node sits
+             below the trace and above it when it sits above — the box has to match
+             or the word looks hoverable where it isn't. Paper titles only appear on
+             hover, so they get no box of their own. */
+          if (n.kind === 'kw' && n.label && n.labelW) {
+            const halfW = n.labelW / 2 + 8;
+            const top = n.side > 0 ? y + n.baseR + 3 : y - n.baseR - 34;
+            const bot = n.side > 0 ? y + n.baseR + 34 : y - n.baseR + 3;
+            if (mx >= x - halfW && mx <= x + halfW && my >= top && my <= bot) return i;
           }
         }
         return -1;
