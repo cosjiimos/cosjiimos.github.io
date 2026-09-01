@@ -492,7 +492,7 @@
 
     .graph-card .gc-hint {
       position: absolute;
-      bottom: 18px;
+      top: 16px;
       left: 22px;
       z-index: 2;
       font-family: 'JetBrains Mono', monospace;
@@ -3421,34 +3421,15 @@
       };
 
       /* ===== Keyword → related papers ===== */
+      /* Only the threads that actually run through the work — a keyword earns a node
+         by connecting three or more papers, so the layer stays readable when shown. */
       const KEYWORD_MAP = [
+        { word: 'generative AI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat', 'advei'] },
         { word: 'design space', papers: ['bogen', 'genpara', 'sketch', 'advei'] },
-        { word: 'intent', papers: ['bogen', 'genpara', 'cogchat'] },
-        { word: 'alignment', papers: ['genpara', 'bogen'] },
+        { word: 'intent', papers: ['bogen', 'genpara', 'cogchat', 'advei'] },
         { word: 'exploration', papers: ['sketch', 'genpara', 'bogen', 'canvas'] },
-        { word: 'GenAI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat', 'advei'] },
-        { word: 'knowledge graph', papers: ['cogchat', 'advei'] },
-        { word: 'conversational AI', papers: ['cogchat'] },
-        { word: 'cognitive grounding', papers: ['cogchat', 'advei'] },
-        { word: 'iterate', papers: ['genpara', 'bogen', 'canvas'] },
-        { word: 'semantic', papers: ['cmlsearch', 'typeface', 'advei'] },
-        { word: 'multimodal', papers: ['multimodal'] },
-        { word: 'inference', papers: ['bogen', 'genpara'] },
-        { word: 'preferential BO', papers: ['bogen'] },
-        { word: '3D shape', papers: ['bogen', 'genpara', 'sketch'] },
-        { word: 'interior', papers: ['cmlsearch'] },
-        { word: 'typography', papers: ['typeface'] },
-        { word: 'CAD', papers: ['multimodal'] },
-        { word: 'sketch', papers: ['sketch'] },
-        { word: 'externalization', papers: ['canvas'] },
-        { word: 'design action', papers: ['canvas', 'workflownet'] },
-        { word: 'workflow', papers: ['workflownet', 'canvas'] },
-        { word: 'node-based', papers: ['workflownet'] },
-        { word: 'prompt-based', papers: ['workflownet', 'sketch'] },
         { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas', 'cogchat'] },
-        { word: 'LLM', papers: ['cogchat', 'genpara'] },
-        { word: 'infinite canvas', papers: ['canvas'] },
-        { word: 'segmentation', papers: ['advei'] },
+        { word: 'cognitive structure', papers: ['cogchat', 'advei', 'canvas'] },
       ];
 
       /* ===== State =====
@@ -3511,35 +3492,42 @@
 
         for (let i = 0; i <= 240; i++) processPath.push(processSpine(i / 240));
 
-        /* A single pen stroke. Amplitude and loop frequency both decay with u, so the
-           line spirals densely at the left and straightens out to the right. The
-           vertical term uses a spiral (sin) against a slower drift so the loops close
-           on themselves rather than reading as a sine wave. */
+        /* A single pen stroke drawn the way a hand actually scribbles: the pen loops
+           BACK on itself rather than only advancing, so the left side is a genuine
+           tangle of crossings instead of a widening wave. The backward component and
+           the loop amplitude both decay along u, so the same gesture straightens out
+           into one calm line on the right. */
         const pts = [];
-        const STEPS = 1400;
-        const TURNS = 15;                 /* how many loops the tangle makes */
+        const STEPS = 2600;
         const ph = rand() * Math.PI * 2;
+
+        /* three incommensurate rates keep the tangle from repeating a visible period */
+        const r1 = 26 + rand() * 6;
+        const r2 = 16.3 + rand() * 4;
+        const r3 = 9.7 + rand() * 3;
 
         for (let i = 0; i <= STEPS; i++) {
           const u = i / STEPS;
           const base = processSpine(u);
 
-          /* chaos: strong to ~0.30, gone by ~0.62 */
-          const chaos = Math.pow(Math.max(0, 1 - u / 0.62), 1.9);
+          /* chaos: full to ~0.22, gone by ~0.60 */
+          const chaos = Math.pow(Math.max(0, 1 - u / 0.60), 2.1);
+          /* the pen slows its looping as the problem resolves */
+          const theta = Math.pow(u, 0.55) * Math.PI * 2 * r1 + ph;
 
-          /* the loop angle advances fast at first, then slows as it unwinds */
-          const theta = Math.pow(u, 0.62) * Math.PI * 2 * TURNS + ph;
+          /* Backtracking: this is what makes it read as a tangle. The horizontal
+             term is large enough near u=0 to overcome the forward march, so the
+             stroke crosses itself repeatedly. */
+          const backX = Math.sin(theta * 0.98 + ph) * W * 0.085 * chaos
+            + Math.sin(theta * 0.31 + ph * 1.7) * W * 0.045 * chaos;
 
-          const ampY = H * 0.30 * chaos;
-          const ampX = W * 0.030 * chaos;
-
-          /* second harmonic keeps the tangle from looking mechanical */
-          const x = base.x
-            + Math.cos(theta) * ampX
-            + Math.cos(theta * 0.47 + ph) * ampX * 0.8;
+          const ampY = H * 0.27 * chaos;
           const y = base.y
-            + Math.sin(theta) * ampY
-            + Math.sin(theta * 0.41 + ph) * ampY * 0.34;
+            + Math.cos(theta) * ampY
+            + Math.cos(theta * (r2 / r1) + ph * 0.6) * ampY * 0.42
+            + Math.sin(theta * (r3 / r1) + ph * 2.2) * ampY * 0.22;
+
+          const x = base.x + backX;
 
           pts.push({ x, y, u });
         }
@@ -3552,33 +3540,36 @@
         nodes = [];
         edges = [];
 
-        MARGIN_L = Math.max(56, W * 0.07);
+        MARGIN_L = Math.max(96, W * 0.155);   /* room for the tangle to loop back */
         MARGIN_R = Math.max(56, W * 0.07);
 
         buildScribble(rand);
 
         const paperIds = Object.keys(PAPERS);
 
-        /* --- papers: glass circles set against the process, x fixed by stage --- */
+        /* --- papers: discs set against the process, x fixed by stage --- */
         const byStage = paperIds.slice().sort((a, b) => PAPERS[a].stage - PAPERS[b].stage);
 
-        /* Radius carries weight: first-author / selected work reads larger. Circles
-           alternate above and below the trace, and any that would collide on x are
-           pushed further out so the bubbles never sit on top of one another. */
-        let side = 1;
-        byStage.forEach((pid) => {
+        /* Radius carries weight: first-author / selected work reads larger. Sides do
+           NOT strictly alternate — a fixed above/below/above rhythm looks mechanical,
+           so the pattern runs in short irregular runs and each disc sits at its own
+           distance from the trace. */
+        const SIDE_RUN = [-1, 1, -1, -1, 1, -1, 1, 1, -1, 1];
+        const LIFTS = [0.94, 1.34, 1.02, 1.52, 0.88, 1.28, 1.10, 1.46, 0.96, 1.22];
+
+        byStage.forEach((pid, i) => {
           const p = PAPERS[pid];
           const u = p.stage;
           const base = processSpine(u);
 
           const near = byStage.filter(q => Math.abs(PAPERS[q].stage - u) < 0.10).length;
-          /* bubbles scale with the card so a narrow viewport does not jam them together */
+          /* discs scale with the card so a narrow viewport does not jam them together */
           const scale = Math.max(0.62, Math.min(1, Math.min(W / 780, H / 420)));
           const R = ((p.selected ? 40 : 32) + Math.min(6, near * 1.5)) * scale;
 
-          side = -side;
-          /* clear the trace by the bubble radius plus breathing room */
-          const lift = R + 26 + (near > 2 ? 16 : 0);
+          const side = SIDE_RUN[i % SIDE_RUN.length];
+          /* varied stand-off so the row never reads as a fixed rhythm */
+          const lift = (R + 24) * LIFTS[i % LIFTS.length] + (near > 2 ? 14 : 0);
           const ty = base.y + side * lift;
 
           nodes.push({
@@ -3591,7 +3582,7 @@
             ay: base.y,
             side,
             tx: base.x,
-            ty: Math.max(R + 14, Math.min(H - R - 30, ty)),
+            ty: Math.max(R + 14, Math.min(H - R - 62, ty)),
             x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
             baseR: R,
             color: THEME_COLOR[(p.themes && p.themes[0]) || 'genai'] || COLORS.nodeA,
@@ -3628,7 +3619,7 @@
         }
 
         /* --- keywords: hidden by default, shown by the toggle --- */
-        const kwPicked = KEYWORD_MAP.filter(k => k.papers.filter(id => PAPERS[id]).length >= 2);
+        const kwPicked = KEYWORD_MAP.filter(k => k.papers.filter(id => PAPERS[id]).length >= 3);
         kwPicked.forEach((k) => {
           const rel = k.papers.filter(pid => PAPERS[pid]);
           if (!rel.length) return;
@@ -4196,12 +4187,14 @@
             ctx.stroke();
 
             ctx.textAlign = 'center';
-            ctx.font = `600 10px 'JetBrains Mono', monospace`;
-            ctx.fillStyle = 'rgba(74, 74, 82, 0.92)';
-            ctx.fillText(st.label.toUpperCase().split('').join(' '), mid, ruleY + 20);
+            ctx.font = `9px 'JetBrains Mono', monospace`;
+            ctx.fillStyle = si === 0 ? 'rgba(124, 119, 155, 0.85)'
+              : si === 1 ? 'rgba(96, 153, 148, 0.90)'
+                : 'rgba(127, 131, 84, 0.90)';
+            ctx.fillText(st.label.toLowerCase().split('').join(' '), mid, ruleY + 19);
 
-            ctx.font = `italic 11px Fraunces, serif`;
-            ctx.fillStyle = 'rgba(154, 154, 160, 0.95)';
+            ctx.font = `italic 11.5px Fraunces, Lora, serif`;
+            ctx.fillStyle = 'rgba(122, 122, 130, 0.85)';
             ctx.fillText(st.note, mid, ruleY + 35);
           }
 
@@ -4235,9 +4228,9 @@
         }
 
         /* ---------- nodes ----------
-           Papers are glass bubbles: a soft tinted fill, a bright rim, and a highlight,
-           so they sit over the trace like the circles in the reference figure. The
-           title is set inside the bubble, wrapped to fit. */
+           Papers are flat tinted discs tethered to their point on the trace. No glass
+           and no specular highlight — the trace is the drawing, the discs just mark
+           where each paper meets it. Titles are set in the site's serif. */
         for (let i = 0; i < nodes.length; i++) {
           const n = nodes[i];
           if (n.alpha <= 0.02) continue;
@@ -4274,46 +4267,26 @@
 
             ctx.globalAlpha = A;
 
-            /* outer bloom */
-            const bloom = ctx.createRadialGradient(x, y, r * 0.6, x, y, r * 1.5);
-            bloom.addColorStop(0, hexA(n.color, active ? 0.20 : 0.12));
-            bloom.addColorStop(1, hexA(n.color, 0));
-            ctx.fillStyle = bloom;
-            ctx.beginPath();
-            ctx.arc(x, y, r * 1.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            /* glass body: tinted, lighter at the top-left */
-            const body = ctx.createRadialGradient(x - r * 0.35, y - r * 0.45, r * 0.1, x, y, r);
-            body.addColorStop(0, hexA(n.color, active ? 0.46 : 0.34));
-            body.addColorStop(0.65, hexA(n.color, active ? 0.30 : 0.20));
-            body.addColorStop(1, hexA(n.color, active ? 0.20 : 0.13));
-            ctx.fillStyle = body;
+            /* Flat tinted disc — no glass, no specular. Weight comes from the fill
+               and a hairline rim, so the drawing stays quiet next to the trace. */
+            ctx.fillStyle = hexA(n.color, active ? 0.30 : 0.19);
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.fill();
 
-            /* rim */
-            ctx.strokeStyle = hexA(n.color, active ? 0.85 : 0.52);
-            ctx.lineWidth = active ? 1.5 : 1;
+            ctx.strokeStyle = hexA(n.color, active ? 0.80 : 0.45);
+            ctx.lineWidth = active ? 1.2 : 0.9;
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.stroke();
 
-            /* specular highlight across the upper edge */
-            ctx.beginPath();
-            ctx.arc(x, y, r * 0.86, Math.PI * 1.15, Math.PI * 1.75);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${(active ? 0.75 : 0.55).toFixed(3)})`;
-            ctx.lineWidth = 1.4;
-            ctx.stroke();
-
-            /* title, wrapped inside the bubble */
+            /* title in the site's serif, wrapped inside the disc */
             const words = String(n.label).split(' ');
-            const fs = r > 36 ? 12 : 11;
-            ctx.font = `600 ${fs}px Inter, ui-sans-serif, system-ui, sans-serif`;
+            const fs = (r > 36 ? 14 : 12.5) * (r / 40 < 0.8 ? 0.92 : 1);
+            ctx.font = `italic 500 ${fs.toFixed(1)}px Fraunces, Lora, serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const maxW = r * 1.62;
+            const maxW = r * 1.55;
             const lines = [];
             let cur = '';
             for (const w of words) {
@@ -4323,18 +4296,21 @@
             }
             if (cur) lines.push(cur);
 
-            const lh = fs * 1.22;
+            const lh = fs * 1.2;
             const startY = y - ((lines.length - 1) * lh) / 2;
-            ctx.fillStyle = `rgba(22, 22, 26, ${(active ? 0.95 : 0.82).toFixed(3)})`;
+            /* ink, but softened — never flat black */
+            ctx.fillStyle = active
+              ? 'rgba(30, 46, 44, 0.97)'
+              : 'rgba(44, 58, 56, 0.80)';
             lines.forEach((ln, li) => ctx.fillText(ln, x, startY + li * lh));
 
             /* venue under the title, only when the bubble is engaged */
             if (active) {
               const p = PAPERS[n.id];
               if (p) {
-                ctx.font = `9px 'JetBrains Mono', monospace`;
-                ctx.fillStyle = 'rgba(74, 74, 82, 0.85)';
-                ctx.fillText(p.venue, x, startY + lines.length * lh + 2);
+                ctx.font = `8.5px 'JetBrains Mono', monospace`;
+                ctx.fillStyle = 'rgba(96, 153, 148, 0.95)';
+                ctx.fillText(p.venue, x, startY + lines.length * lh + 3);
               }
             }
 
