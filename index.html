@@ -455,7 +455,19 @@
       pointer-events: none;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+    }
+
+    /* legend swatch: matches the ringed lead marks on the line */
+    .graph-card .gc-hint .gch-lead {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #609994;
+      box-shadow: 0 0 0 2.5px rgba(96, 153, 148, 0.28);
+      margin: 0 3px 0 4px;
+      flex: none;
     }
 
     .graph-card.has-pointer {
@@ -1853,7 +1865,7 @@
 
         <div class="graph-card">
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
-          <div class="gc-hint">click a keyword to see its papers · drag to rearrange</div>
+          <div class="gc-hint">click a keyword to see its papers &nbsp;·&nbsp; <span class="gch-lead"></span> first / co-first authored</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
         </div>
 
@@ -3034,6 +3046,7 @@
         },
         genpara: {
           id: 'genpara',
+          lead: 'first author',
           stage: 0.66,          /* tuning the generated form toward the intended region */
           year: 2025,
           venue: 'CHI \'25 · ACM',
@@ -3047,6 +3060,7 @@
         },
         cmlsearch: {
           id: 'cmlsearch',
+          lead: 'co-first author',
           stage: 0.90,          /* retrieving concrete references by resolved attributes */
           year: 2025,
           venue: 'JCDE · 2025',
@@ -3058,6 +3072,7 @@
         },
         multimodal: {
           id: 'multimodal',
+          lead: 'co-first author',
           stage: 0.44,          /* clarifying intent to the system while modeling */
           year: 2025,
           venue: 'CHI \'25 Workshop',
@@ -3072,6 +3087,7 @@
         },
         typeface: {
           id: 'typeface',
+          lead: 'first author',
           stage: 0.94,          /* quantifying the finished pairing as a principle */
           year: 2024,
           venue: 'Sci. Reports · 2024',
@@ -3095,6 +3111,7 @@
         },
         canvas: {
           id: 'canvas',
+          lead: 'co-first author',
           stage: 0.10,          /* how designers externalize while the problem is still open */
           year: 2026,
           venue: 'CHI \'26 EA',
@@ -3109,6 +3126,7 @@
         },
         cogchat: {
           id: 'cogchat',
+          lead: 'first author',
           stage: 0.52,          /* grounding the conversation in the designer's own structure */
           year: 2026,
           venue: 'UIST \'26 · ACM',
@@ -3122,6 +3140,7 @@
         },
         workflownet: {
           id: 'workflownet',
+          lead: 'co-first author',
           stage: 0.24,          /* how designer workflows unfold across interfaces */
           year: 2026,
           venue: 'ADR · 2026',
@@ -3287,8 +3306,10 @@
             tx: base.x,
             ty: base.y,
             x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
-            baseR: p.selected ? 4.6 : 3.6,
-            color: THEME_COLOR[(p.themes && p.themes[0]) || 'genai'] || COLORS.nodeA,
+            /* work I led reads larger and in the accent; the rest stays muted */
+            lead: !!p.lead,
+            baseR: p.lead ? 5.6 : 3.4,
+            color: p.lead ? '#609994' : '#b6b2c8',
             phase: rand() * Math.PI * 2,
             pinned: true,          /* marks stay on the line; they do not drift */
           });
@@ -3448,7 +3469,7 @@
           const y = n.dy !== undefined ? n.dy : n.y;
 
           /* the dot itself — paper marks are small, so give them a generous target */
-          const hit = n.kind === 'paper' ? Math.max(11, n.baseR + 6) : Math.max(13, n.baseR + 7);
+          const hit = n.kind === 'paper' ? Math.max(12, n.baseR + 7) : Math.max(13, n.baseR + 7);
           const ddx = mx - x, ddy = my - y;
           if (ddx * ddx + ddy * ddy < hit * hit) return i;
 
@@ -3979,17 +4000,27 @@
             }
 
             ctx.globalAlpha = A;
-            ctx.fillStyle = (active || linked) ? '#609994' : hexA(n.color, 0.85);
+            ctx.fillStyle = (active || linked) ? '#609994' : hexA(n.color, n.lead ? 0.95 : 0.7);
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.fill();
 
             /* a hairline ring keeps the mark legible against the trace */
-            ctx.strokeStyle = `rgba(255, 255, 255, ${(0.85 * A).toFixed(3)})`;
-            ctx.lineWidth = 1.1;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${(0.9 * A).toFixed(3)})`;
+            ctx.lineWidth = 1.2;
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.stroke();
+
+            /* first / co-first authored work carries an outer ring as well, so the
+               distinction survives even where the marks sit close together */
+            if (n.lead) {
+              ctx.strokeStyle = `rgba(96, 153, 148, ${((active || linked) ? 0.85 : 0.42) * A})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.arc(x, y, r + 3.4, 0, Math.PI * 2);
+              ctx.stroke();
+            }
             ctx.globalAlpha = 1;
 
             /* the title appears only while the mark itself is engaged */
@@ -4003,6 +4034,11 @@
                 ctx.font = `8.5px 'JetBrains Mono', monospace`;
                 ctx.fillStyle = 'rgba(96, 153, 148, 0.95)';
                 ctx.fillText(p.venue, x, y - r - 26);
+                if (p.lead) {
+                  ctx.font = `8px 'JetBrains Mono', monospace`;
+                  ctx.fillStyle = 'rgba(124, 119, 155, 0.95)';
+                  ctx.fillText(p.lead, x, y - r - 38);
+                }
               }
               ctx.textAlign = 'left';
             }
