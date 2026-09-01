@@ -4016,10 +4016,11 @@
 
             ctx.globalAlpha = A;
 
-            if (n.lead) {
-              /* Work I led gets a glass bead: the same mint and size, but lit from
-                 the upper left with a soft inner shadow at the lower right, so it
-                 reads as a small solid object rather than a flat dot. */
+            /* Every paper mark is a glass bead — an off-centre radial body lit from
+               the upper left, a white rim, and a halo — so they read as objects on
+               the process. Size and colour carry the authorship distinction; the
+               lead marks alone take the mint halo. */
+            {
               const base = (active || linked) ? '#609994' : n.color;
 
               const body = ctx.createRadialGradient(
@@ -4034,39 +4035,21 @@
               ctx.arc(x, y, r, 0, Math.PI * 2);
               ctx.fill();
 
-              /* specular: a short bright arc across the upper-left edge */
-              ctx.beginPath();
-              ctx.arc(x, y, r * 0.62, Math.PI * 1.02, Math.PI * 1.62);
-              ctx.strokeStyle = `rgba(255, 255, 255, ${(0.92 * A).toFixed(3)})`;
-              ctx.lineWidth = Math.max(0.9, r * 0.26);
-              ctx.lineCap = 'round';
-              ctx.stroke();
-              ctx.lineCap = 'butt';
-
               /* rim light picks the bead out of the background */
-              ctx.strokeStyle = `rgba(255, 255, 255, ${(0.95 * A).toFixed(3)})`;
+              ctx.strokeStyle = `rgba(255, 255, 255, ${((n.lead ? 0.95 : 0.9) * A).toFixed(3)})`;
               ctx.lineWidth = 1.2;
               ctx.beginPath();
               ctx.arc(x, y, r, 0, Math.PI * 2);
               ctx.stroke();
 
               /* halo, so the bead sits in the page rather than on it */
-              ctx.strokeStyle = `rgba(96, 153, 148, ${(((active || linked) ? 0.85 : 0.42) * A).toFixed(3)})`;
+              const halo = n.lead
+                ? `rgba(96, 153, 148, ${(((active || linked) ? 0.85 : 0.42) * A).toFixed(3)})`
+                : `rgba(143, 138, 168, ${(((active || linked) ? 0.70 : 0.28) * A).toFixed(3)})`;
+              ctx.strokeStyle = halo;
               ctx.lineWidth = 1;
               ctx.beginPath();
               ctx.arc(x, y, r + 3.4, 0, Math.PI * 2);
-              ctx.stroke();
-            } else {
-              ctx.fillStyle = (active || linked) ? '#609994' : hexA(n.color, 0.88);
-              ctx.beginPath();
-              ctx.arc(x, y, r, 0, Math.PI * 2);
-              ctx.fill();
-
-              /* a hairline ring keeps the mark legible against the trace */
-              ctx.strokeStyle = `rgba(255, 255, 255, ${(0.9 * A).toFixed(3)})`;
-              ctx.lineWidth = 1.2;
-              ctx.beginPath();
-              ctx.arc(x, y, r, 0, Math.PI * 2);
               ctx.stroke();
             }
             ctx.globalAlpha = 1;
