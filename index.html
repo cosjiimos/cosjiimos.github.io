@@ -442,57 +442,9 @@
       z-index: 1;
     }
 
-    /* ----- keyword layer toggle ----- */
-    .graph-card .gc-kw-toggle {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      z-index: 3;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 6px 12px 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(8px);
-      cursor: pointer;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--ink-muted);
-      transition: color .18s ease, border-color .18s ease, background-color .18s ease;
-    }
-
-    .graph-card .gc-kw-toggle:hover {
-      color: var(--ink-soft);
-      border-color: var(--accent-soft);
-    }
-
-    .graph-card .gc-kw-toggle .gckw-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: transparent;
-      border: 1.5px solid currentColor;
-      transition: background-color .18s ease, border-color .18s ease;
-    }
-
-    .graph-card .gc-kw-toggle.is-on {
-      color: var(--accent);
-      border-color: var(--accent-soft);
-      background: rgba(96, 153, 148, 0.10);
-    }
-
-    .graph-card .gc-kw-toggle.is-on .gckw-dot {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
     .graph-card .gc-hint {
       position: absolute;
-      top: 16px;
+      bottom: 16px;
       left: 22px;
       z-index: 2;
       font-family: 'JetBrains Mono', monospace;
@@ -2009,12 +1961,6 @@
         height: clamp(420px, 72vh, 660px);
       }
 
-      .graph-card .gc-kw-toggle {
-        top: 10px;
-        right: 10px;
-        padding: 5px 10px 5px 8px;
-        font-size: 9px;
-      }
 
     }
   </style>
@@ -2136,7 +2082,7 @@
 
         <div class="graph-card">
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
-          <div class="gc-hint">click a paper to open it · drag to rearrange</div>
+          <div class="gc-hint">click a keyword to see its papers · drag to rearrange</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
           <div class="gc-hover-panel" id="gc-hover-panel" aria-hidden="true"></div>
         </div>
@@ -3421,15 +3367,22 @@
       };
 
       /* ===== Keyword → related papers ===== */
-      /* Only the threads that actually run through the work — a keyword earns a node
-         by connecting three or more papers, so the layer stays readable when shown. */
+      /* The concepts the work actually runs on. These are the only labelled nodes on
+         the canvas — clicking one opens the papers behind it — so the set is kept
+         small and spread across the whole process rather than bunched in the middle. */
       const KEYWORD_MAP = [
-        { word: 'generative AI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat', 'advei'] },
-        { word: 'design space', papers: ['bogen', 'genpara', 'sketch', 'advei'] },
-        { word: 'intent', papers: ['bogen', 'genpara', 'cogchat', 'advei'] },
+        { word: 'externalization', papers: ['canvas', 'sketch'] },
         { word: 'exploration', papers: ['sketch', 'genpara', 'bogen', 'canvas'] },
+        { word: 'designer workflow', papers: ['workflownet', 'canvas', 'multimodal'] },
         { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas', 'cogchat'] },
+        { word: 'generative AI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat', 'advei'] },
+        { word: 'intent', papers: ['bogen', 'genpara', 'cogchat', 'advei'] },
         { word: 'cognitive structure', papers: ['cogchat', 'advei', 'canvas'] },
+        { word: 'knowledge graph', papers: ['cogchat', 'advei'] },
+        { word: 'design space', papers: ['bogen', 'genpara', 'sketch', 'advei'] },
+        { word: 'inference', papers: ['bogen', 'genpara', 'advei'] },
+        { word: '3D form', papers: ['bogen', 'genpara', 'sketch'] },
+        { word: 'semantic retrieval', papers: ['cmlsearch', 'typeface'] },
       ];
 
       /* ===== State =====
@@ -3441,8 +3394,6 @@
       let edges = [];
       let scribble = [];           /* the design-process trace, in card space */
       let processPath = [];        /* sampled spine of the process, for placing nodes */
-      let showKeywords = false;    /* keywords are opt-in — the toggle in the card */
-      let kwFade = 0;              /* eased 0→1 so keywords appear rather than pop */
 
       /* The named stretches of the process, drawn as a scale under the trace. */
       const STAGES = [
@@ -3547,100 +3498,123 @@
 
         const paperIds = Object.keys(PAPERS);
 
-        /* --- papers: discs set against the process, x fixed by stage --- */
+        /* --- papers: small unlabelled marks ON the process line --- */
+        /* No titles on the canvas. Each paper is just a mark at its stage, so you can
+           see how the work distributes across the process; the titles live in the
+           keyword popups. */
         const byStage = paperIds.slice().sort((a, b) => PAPERS[a].stage - PAPERS[b].stage);
 
-        /* Radius carries weight: first-author / selected work reads larger. Sides do
-           NOT strictly alternate — a fixed above/below/above rhythm looks mechanical,
-           so the pattern runs in short irregular runs and each disc sits at its own
-           distance from the trace. */
-        const SIDE_RUN = [-1, 1, -1, -1, 1, -1, 1, 1, -1, 1];
-        const LIFTS = [0.94, 1.34, 1.02, 1.52, 0.88, 1.28, 1.10, 1.46, 0.96, 1.22];
-
-        byStage.forEach((pid, i) => {
+        byStage.forEach((pid) => {
           const p = PAPERS[pid];
-          const u = p.stage;
-          const base = processSpine(u);
-
-          const near = byStage.filter(q => Math.abs(PAPERS[q].stage - u) < 0.10).length;
-          /* discs scale with the card so a narrow viewport does not jam them together */
-          const scale = Math.max(0.62, Math.min(1, Math.min(W / 780, H / 420)));
-          const R = ((p.selected ? 40 : 32) + Math.min(6, near * 1.5)) * scale;
-
-          const side = SIDE_RUN[i % SIDE_RUN.length];
-          /* varied stand-off so the row never reads as a fixed rhythm */
-          const lift = (R + 24) * LIFTS[i % LIFTS.length] + (near > 2 ? 14 : 0);
-          const ty = base.y + side * lift;
-
+          const base = processSpine(p.stage);
           nodes.push({
             kind: 'paper',
             id: pid,
             label: p.node || p.short.split('—')[0].trim(),
             papers: [pid],
-            stage: u,
+            stage: p.stage,
+            ax: base.x,
+            ay: base.y,
+            tx: base.x,
+            ty: base.y,
+            x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
+            baseR: p.selected ? 4.6 : 3.6,
+            color: THEME_COLOR[(p.themes && p.themes[0]) || 'genai'] || COLORS.nodeA,
+            phase: rand() * Math.PI * 2,
+            pinned: true,          /* marks stay on the line; they do not drift */
+          });
+        });
+
+        /* --- keywords: the labelled tier, alternating above and below the trace --- */
+        const kwPicked = KEYWORD_MAP.filter(k => k.papers.filter(id => PAPERS[id]).length >= 2);
+
+        /* irregular side pattern and stand-off so the row never reads as a rhythm */
+        const SIDE_RUN = [-1, 1, -1, -1, 1, -1, 1, 1, -1, 1, -1, 1];
+        const LIFTS = [0.72, 1.10, 0.86, 1.34, 0.66, 1.18, 0.94, 1.42, 0.78, 1.26, 1.02, 0.88];
+
+        const kwEntries = kwPicked.map((k) => {
+          const rel = k.papers.filter(pid => PAPERS[pid]);
+          const mu = rel.reduce((acc, pid) => acc + PAPERS[pid].stage, 0) / rel.length;
+          return { k, rel, mu };
+        }).sort((a, b) => a.mu - b.mu);
+
+        kwEntries.forEach((e, i) => {
+          const base = processSpine(e.mu);
+          const side = SIDE_RUN[i % SIDE_RUN.length];
+          const lift = H * 0.13 * LIFTS[i % LIFTS.length] + 26;
+          nodes.push({
+            kind: 'kw',
+            id: 'kw:' + e.k.word,
+            label: e.k.word,
+            papers: e.rel,
+            stage: e.mu,
             ax: base.x,
             ay: base.y,
             side,
             tx: base.x,
-            ty: Math.max(R + 14, Math.min(H - R - 62, ty)),
+            ty: Math.max(46, Math.min(H - 46, base.y + side * lift)),
             x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
-            baseR: R,
-            color: THEME_COLOR[(p.themes && p.themes[0]) || 'genai'] || COLORS.nodeA,
-            phase: rand() * Math.PI * 2,
-          });
-        });
-
-        /* Resolve any bubbles that still overlap by pushing them further from the
-           trace along y — x is meaning and must not move. */
-        {
-          const bubbles = nodes.filter(n => n.kind === 'paper');
-          for (let pass = 0; pass < 60; pass++) {
-            let moved = false;
-            for (let a = 0; a < bubbles.length; a++) {
-              for (let b = a + 1; b < bubbles.length; b++) {
-                const A = bubbles[a], B = bubbles[b];
-                const dx = B.tx - A.tx, dy = B.ty - A.ty;
-                const need = A.baseR + B.baseR + 12;
-                const d = Math.hypot(dx, dy);
-                if (d >= need || d === 0) continue;
-                /* separate vertically, away from the trace on each one's own side */
-                const push = (need - d) / 2 + 0.5;
-                A.ty -= Math.sign(dy || (A.side < 0 ? 1 : -1)) * push;
-                B.ty += Math.sign(dy || (A.side < 0 ? 1 : -1)) * push;
-                moved = true;
-              }
-            }
-            if (!moved) break;
-          }
-          /* keep every bubble on the canvas */
-          for (const n of bubbles) {
-            n.ty = Math.max(n.baseR + 12, Math.min(H - n.baseR - 58, n.ty));
-          }
-        }
-
-        /* --- keywords: hidden by default, shown by the toggle --- */
-        const kwPicked = KEYWORD_MAP.filter(k => k.papers.filter(id => PAPERS[id]).length >= 3);
-        kwPicked.forEach((k) => {
-          const rel = k.papers.filter(pid => PAPERS[pid]);
-          if (!rel.length) return;
-          const mu = rel.reduce((acc, pid) => acc + PAPERS[pid].stage, 0) / rel.length;
-          const base = processSpine(mu);
-          nodes.push({
-            kind: 'kw',
-            id: 'kw:' + k.word,
-            label: k.word,
-            papers: rel,
-            stage: mu,
-            ax: base.x,
-            ay: base.y,
-            tx: base.x + (rand() - 0.5) * W * 0.05,
-            ty: base.y + (rand() - 0.5) * H * 0.30,
-            x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
-            baseR: 3.2 + Math.min(rel.length, 5) * 0.42,
+            baseR: 4 + Math.min(5, e.rel.length) * 0.7,
             color: COLORS.nodeB,
             phase: rand() * Math.PI * 2,
           });
         });
+
+        /* Keywords bunch wherever their papers cluster, so spread the labelled tier:
+           first push apart along x (the mean stage is indicative, not exact), then
+           along y within each side. Labels are what collide, so the required gap is
+           based on the rendered word width. */
+        {
+          ctx.font = `italic 400 13px Fraunces, Lora, serif`;
+          const kw = nodes.filter(n => n.kind === 'kw');
+          for (const n of kw) n.lw = ctx.measureText(n.label).width;
+
+          const minX = MARGIN_L * 0.5;
+          const maxX = W - MARGIN_R * 0.5;
+
+          for (let pass = 0; pass < 90; pass++) {
+            let moved = false;
+            for (let a = 0; a < kw.length; a++) {
+              for (let b = a + 1; b < kw.length; b++) {
+                const A = kw[a], B = kw[b];
+                if (A.side !== B.side) continue;
+                const needX = (A.lw + B.lw) / 2 + 22;
+                const dx = B.tx - A.tx;
+                const dy = B.ty - A.ty;
+                if (Math.abs(dy) > 34) continue;         /* different rows, fine */
+                if (Math.abs(dx) >= needX) continue;
+                const push = (needX - Math.abs(dx)) / 2 + 0.5;
+                const dir = dx >= 0 ? 1 : -1;
+                A.tx -= dir * push;
+                B.tx += dir * push;
+                moved = true;
+              }
+            }
+            /* keep them on the canvas */
+            for (const n of kw) n.tx = Math.max(minX, Math.min(maxX, n.tx));
+            if (!moved) break;
+          }
+
+          /* any pair still too close gets separated vertically instead */
+          for (let pass = 0; pass < 40; pass++) {
+            let moved = false;
+            for (let a = 0; a < kw.length; a++) {
+              for (let b = a + 1; b < kw.length; b++) {
+                const A = kw[a], B = kw[b];
+                if (A.side !== B.side) continue;
+                const needX = (A.lw + B.lw) / 2 + 22;
+                if (Math.abs(B.tx - A.tx) >= needX) continue;
+                if (Math.abs(B.ty - A.ty) >= 34) continue;
+                const dir = (B.ty - A.ty) >= 0 ? 1 : -1;
+                A.ty -= dir * 6;
+                B.ty += dir * 6;
+                moved = true;
+              }
+            }
+            for (const n of kw) n.ty = Math.max(52, Math.min(H - 52, n.ty));
+            if (!moved) break;
+          }
+        }
 
         /* edges: keyword → each paper it links */
         const idxOf = new Map(nodes.map((n, i) => [n.id, i]));
@@ -3693,7 +3667,6 @@
       function nodeAt(mx, my) {
         for (let i = nodes.length - 1; i >= 0; i--) {
           const n = nodes[i];
-          if (n.kind === 'kw' && kwFade < 0.35) continue;   /* keyword layer is off */
           const x = n.dx !== undefined ? n.dx : n.x;
           const y = n.dy !== undefined ? n.dy : n.y;
           const hit = n.kind === 'paper' ? (n.baseR || 32) : 12;
@@ -3808,30 +3781,6 @@
         popup.dataset.side = side;
       }
 
-      /* ----- keyword toggle ----- */
-      (function mountToggle() {
-        const btn = document.createElement('button');
-        btn.className = 'gc-kw-toggle';
-        btn.type = 'button';
-        btn.setAttribute('aria-pressed', 'false');
-        btn.innerHTML = `<span class="gckw-dot"></span><span>keywords</span>`;
-        card.appendChild(btn);
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          showKeywords = !showKeywords;
-          btn.classList.toggle('is-on', showKeywords);
-          btn.setAttribute('aria-pressed', String(showKeywords));
-          if (!showKeywords && pinnedIdx >= 0 && nodes[pinnedIdx] && nodes[pinnedIdx].kind === 'kw') {
-            closePopup();
-          }
-        });
-        btn.addEventListener('mousedown', e => e.stopPropagation());
-      })();
-
-      function inControls(target) {
-        return !!(target.closest && target.closest('.gc-kw-toggle'));
-      }
-
       resize();
 
       /* ----- mouse handlers (with drag) ----- */
@@ -3874,7 +3823,7 @@
       });
 
       card.addEventListener('mousedown', (e) => {
-        if (popup.contains(e.target) || inControls(e.target)) return;
+        if (popup.contains(e.target)) return;
         const rect = card.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -3903,7 +3852,7 @@
       });
 
       card.addEventListener('click', (e) => {
-        if (popup.contains(e.target) || inControls(e.target)) return;
+        if (popup.contains(e.target)) return;
         const rect = card.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -3920,7 +3869,7 @@
 
       /* touch — tap opens, drag moves */
       card.addEventListener('touchstart', (e) => {
-        if (e.touches[0] && !inControls(e.target)) {
+        if (e.touches[0]) {
           const rect = card.getBoundingClientRect();
           const tx = e.touches[0].clientX - rect.left;
           const ty = e.touches[0].clientY - rect.top;
@@ -3979,10 +3928,6 @@
         ctx.clearRect(0, 0, W, H);
 
         const activeIdx = pinnedIdx >= 0 ? pinnedIdx : hoverIdx;
-
-        /* ease the keyword layer in and out */
-        kwFade += ((showKeywords ? 1 : 0) - kwFade) * 0.12;
-        if (kwFade < 0.002) kwFade = 0;
 
         /* ---------- the design-process trace ----------
            Drawn behind everything, as one continuous pen stroke. It breathes only
@@ -4101,7 +4046,7 @@
 
           n.dx = n.x + n.ox;
           n.dy = n.y + n.oy;
-          n.alpha = (n.kind === 'kw') ? kwFade : 1;
+          n.alpha = 1;
         }
 
         if (pinnedIdx >= 0 && nodes[pinnedIdx]) positionPopup(pinnedIdx);
@@ -4151,7 +4096,7 @@
            horizontal axis is legible without having to infer it from the drawing. */
         {
           ctx.save();
-          const ruleY = H - 42;
+          const ruleY = 30;
           const x0 = processSpine(0).x;
           const x1 = processSpine(1).x;
 
@@ -4215,7 +4160,7 @@
         for (const e of edges) {
           const a = nodes[e.a], b = nodes[e.b];
           if (!a || !b) continue;
-          const ea = Math.min(a.alpha, b.alpha) * kwFade;
+          const ea = Math.min(a.alpha, b.alpha) * (activeIdx >= 0 && (e.a === activeIdx || e.b === activeIdx) ? 1 : 0.35);
           if (ea <= 0.02) continue;
           const incident = (e.a === activeIdx || e.b === activeIdx);
           ctx.strokeStyle = incident
@@ -4228,9 +4173,9 @@
         }
 
         /* ---------- nodes ----------
-           Papers are flat tinted discs tethered to their point on the trace. No glass
-           and no specular highlight — the trace is the drawing, the discs just mark
-           where each paper meets it. Titles are set in the site's serif. */
+           Papers are small unlabelled marks sitting on the process line. Keywords are
+           the labelled tier above and below it — clicking one opens the papers behind
+           it, so no titles crowd the drawing. */
         for (let i = 0; i < nodes.length; i++) {
           const n = nodes[i];
           if (n.alpha <= 0.02) continue;
@@ -4241,116 +4186,109 @@
           const isPinned = (i === pinnedIdx);
           const isPaper = n.kind === 'paper';
           const active = isHover || isPinned;
+          /* a paper mark lights up when a keyword touching it is engaged */
+          const linked = !active && activeIdx >= 0 && nodes[activeIdx]
+            && nodes[activeIdx].papers && nodes[activeIdx].papers.indexOf(n.id) >= 0;
 
           if (isPaper) {
-            const r = n.baseR + Math.sin(t * 0.9 + n.phase) * 0.8 + (active ? 2.5 : 0);
+            const r = n.baseR + (active ? 2 : linked ? 1.2 : 0);
 
-            /* the stalk connecting the bubble back to its point on the process */
-            ctx.beginPath();
-            ctx.moveTo(x, y + (n.side > 0 ? -r : r));
-            ctx.lineTo(n.ax, n.ay);
-            ctx.strokeStyle = active
-              ? `rgba(96, 153, 148, ${(0.55 * A).toFixed(3)})`
-              : `rgba(22, 22, 26, ${(0.13 * A).toFixed(3)})`;
-            ctx.lineWidth = active ? 1.2 : 0.8;
-            ctx.setLineDash(active ? [] : [2, 3]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            /* the anchor dot ON the process line */
-            ctx.beginPath();
-            ctx.arc(n.ax, n.ay, active ? 3.4 : 2.4, 0, Math.PI * 2);
-            ctx.fillStyle = active
-              ? `rgba(96, 153, 148, ${A.toFixed(3)})`
-              : `rgba(90, 88, 104, ${(0.55 * A).toFixed(3)})`;
-            ctx.fill();
+            if (active || linked) {
+              const gr = ctx.createRadialGradient(x, y, 0, x, y, 16);
+              gr.addColorStop(0, `rgba(96, 153, 148, ${(active ? 0.34 : 0.20).toFixed(3)})`);
+              gr.addColorStop(1, 'rgba(96, 153, 148, 0)');
+              ctx.fillStyle = gr;
+              ctx.beginPath();
+              ctx.arc(x, y, 16, 0, Math.PI * 2);
+              ctx.fill();
+            }
 
             ctx.globalAlpha = A;
-
-            /* Flat tinted disc — no glass, no specular. Weight comes from the fill
-               and a hairline rim, so the drawing stays quiet next to the trace. */
-            ctx.fillStyle = hexA(n.color, active ? 0.30 : 0.19);
+            ctx.fillStyle = (active || linked) ? '#609994' : hexA(n.color, 0.85);
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.strokeStyle = hexA(n.color, active ? 0.80 : 0.45);
-            ctx.lineWidth = active ? 1.2 : 0.9;
+            /* a hairline ring keeps the mark legible against the trace */
+            ctx.strokeStyle = `rgba(255, 255, 255, ${(0.85 * A).toFixed(3)})`;
+            ctx.lineWidth = 1.1;
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.stroke();
+            ctx.globalAlpha = 1;
 
-            /* title in the site's serif, wrapped inside the disc */
-            const words = String(n.label).split(' ');
-            const fs = (r > 36 ? 14 : 12.5) * (r / 40 < 0.8 ? 0.92 : 1);
-            ctx.font = `italic 500 ${fs.toFixed(1)}px Fraunces, Lora, serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const maxW = r * 1.55;
-            const lines = [];
-            let cur = '';
-            for (const w of words) {
-              const probe = cur ? cur + ' ' + w : w;
-              if (ctx.measureText(probe).width > maxW && cur) { lines.push(cur); cur = w; }
-              else cur = probe;
-            }
-            if (cur) lines.push(cur);
-
-            const lh = fs * 1.2;
-            const startY = y - ((lines.length - 1) * lh) / 2;
-            /* ink, but softened — never flat black */
-            ctx.fillStyle = active
-              ? 'rgba(30, 46, 44, 0.97)'
-              : 'rgba(44, 58, 56, 0.80)';
-            lines.forEach((ln, li) => ctx.fillText(ln, x, startY + li * lh));
-
-            /* venue under the title, only when the bubble is engaged */
+            /* the title appears only while the mark itself is engaged */
             if (active) {
               const p = PAPERS[n.id];
+              ctx.font = `italic 500 12.5px Fraunces, Lora, serif`;
+              ctx.textAlign = 'center';
+              ctx.fillStyle = 'rgba(30, 46, 44, 0.97)';
+              ctx.fillText(n.label, x, y - r - 12);
               if (p) {
                 ctx.font = `8.5px 'JetBrains Mono', monospace`;
                 ctx.fillStyle = 'rgba(96, 153, 148, 0.95)';
-                ctx.fillText(p.venue, x, startY + lines.length * lh + 3);
+                ctx.fillText(p.venue, x, y - r - 26);
               }
+              ctx.textAlign = 'left';
             }
-
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'alphabetic';
-            ctx.globalAlpha = 1;
             continue;
           }
 
-          /* ---- keyword nodes: small dots, only while the toggle is on ---- */
-          const r = n.baseR + Math.sin(t * 1.2 + n.phase) * 0.5 + (isHover ? 1.4 : 0);
+          /* ---- keyword nodes: the labelled tier ---- */
+          const r = n.baseR + Math.sin(t * 1.1 + n.phase) * 0.4 + (active ? 1.6 : 0);
+
+          /* tether back to its place on the process */
+          ctx.beginPath();
+          ctx.moveTo(x, y + (n.side > 0 ? -r : r));
+          ctx.lineTo(n.ax, n.ay);
+          ctx.strokeStyle = active
+            ? `rgba(96, 153, 148, ${(0.50 * A).toFixed(3)})`
+            : `rgba(22, 22, 26, ${(0.10 * A).toFixed(3)})`;
+          ctx.lineWidth = active ? 1.1 : 0.7;
+          ctx.setLineDash(active ? [] : [2, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
 
           if (active) {
-            const gr = ctx.createRadialGradient(x, y, 0, x, y, 24);
-            gr.addColorStop(0, `rgba(96, 153, 148, ${(0.32 * A).toFixed(3)})`);
+            const gr = ctx.createRadialGradient(x, y, 0, x, y, 26);
+            gr.addColorStop(0, `rgba(96, 153, 148, ${(0.30 * A).toFixed(3)})`);
             gr.addColorStop(1, 'rgba(96, 153, 148, 0)');
             ctx.fillStyle = gr;
             ctx.beginPath();
-            ctx.arc(x, y, 24, 0, Math.PI * 2);
+            ctx.arc(x, y, 26, 0, Math.PI * 2);
             ctx.fill();
           }
 
           ctx.globalAlpha = A;
-          ctx.fillStyle = active ? COLORS.paper : n.color;
+          ctx.fillStyle = active ? '#609994' : hexA(n.color, 0.75);
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
+          ctx.strokeStyle = `rgba(255, 255, 255, ${(0.8 * A).toFixed(3)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.stroke();
           ctx.globalAlpha = 1;
 
+          /* the word, set below or above depending on which side it sits */
           if (n.label) {
-            const fs = 11.5 + (isHover ? 1 : 0);
-            ctx.font = `italic ${active ? '500' : '400'} ${fs}px Fraunces, serif`;
-            ctx.fillStyle = `rgba(22, 22, 26, ${((active ? 1 : 0.72) * A).toFixed(3)})`;
-            if (n.labelLeft) {
-              ctx.textAlign = 'right';
-              ctx.fillText(n.label, x - r - 7, y + 4);
-              ctx.textAlign = 'left';
-            } else {
-              ctx.fillText(n.label, x + r + 7, y + 4);
-            }
+            const fs = 13 + (active ? 0.8 : 0);
+            ctx.font = `italic ${active ? '500' : '400'} ${fs}px Fraunces, Lora, serif`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = active
+              ? `rgba(30, 46, 44, ${A.toFixed(3)})`
+              : `rgba(44, 58, 56, ${(0.78 * A).toFixed(3)})`;
+            const ly = n.side > 0 ? y + r + 16 : y - r - 10;
+            ctx.fillText(n.label, x, ly);
+
+            /* count of papers behind the word */
+            ctx.font = `8.5px 'JetBrains Mono', monospace`;
+            ctx.fillStyle = active
+              ? 'rgba(96, 153, 148, 0.95)'
+              : `rgba(154, 154, 160, ${(0.85 * A).toFixed(3)})`;
+            ctx.fillText(`${n.papers.length} papers`, x, n.side > 0 ? ly + 13 : ly - 12);
+            ctx.textAlign = 'left';
           }
         }
 
