@@ -1761,7 +1761,7 @@
         <h1 class="name" style="cursor:pointer;" onclick="document.querySelector('.nav-item[data-tab=&quot;home&quot;]').click();">Jiin<br /><em>Choi.</em></h1>
 <div class="role">
   Ph.D. &amp; M.S. Integrated Student<br />
-  <a href="https://designinformatics.hanyang.ac.kr/" target="_blank" rel="noopener"><span>Design AI Lab (DILAB)</span></a><br />
+  <a href="https://designai.hanyang.ac.kr" target="_blank" rel="noopener"><span>Design AI Lab</span></a><br />
   &amp; Human-Centered AI Design Institute<br />
   at Hanyang University<br />
   · Advised by Kyung Hoon Hyun
@@ -3029,6 +3029,7 @@
           title: 'Cognitive Space Modeling &amp; Segment-based Design Generation',
           short: 'Cognitive space modeling & segment-based design generation',
           node: 'GenAlign',
+          lead: 'first author',
           authors: 'Author list to be announced',
           doi: '',
           themes: ['genai', 'design-space'],
@@ -3309,7 +3310,7 @@
             /* work I led reads larger and in the accent; the rest stays muted */
             lead: !!p.lead,
             baseR: p.lead ? 5.6 : 3.4,
-            color: p.lead ? '#609994' : '#b6b2c8',
+            color: p.lead ? '#609994' : '#8f8aa8',
             phase: rand() * Math.PI * 2,
             pinned: true,          /* marks stay on the line; they do not drift */
           });
@@ -4000,7 +4001,7 @@
             }
 
             ctx.globalAlpha = A;
-            ctx.fillStyle = (active || linked) ? '#609994' : hexA(n.color, n.lead ? 0.95 : 0.7);
+            ctx.fillStyle = (active || linked) ? '#609994' : hexA(n.color, n.lead ? 0.95 : 0.88);
             ctx.beginPath();
             ctx.arc(x, y, r, 0, Math.PI * 2);
             ctx.fill();
