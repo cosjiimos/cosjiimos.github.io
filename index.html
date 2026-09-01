@@ -403,7 +403,7 @@
     .graph-card {
       position: relative;
       width: 100%;
-      height: clamp(280px, 56vh, 620px);
+      height: clamp(420px, 68vh, 680px);
       background:
         radial-gradient(ellipse 36% 68% at 50% 50%,
           rgba(96, 153, 148, 0.32) 0%,
@@ -440,6 +440,54 @@
       height: 100%;
       display: block;
       z-index: 1;
+    }
+
+    /* ----- keyword layer toggle ----- */
+    .graph-card .gc-kw-toggle {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      transition: color .18s ease, border-color .18s ease, background-color .18s ease;
+    }
+
+    .graph-card .gc-kw-toggle:hover {
+      color: var(--ink-soft);
+      border-color: var(--accent-soft);
+    }
+
+    .graph-card .gc-kw-toggle .gckw-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1.5px solid currentColor;
+      transition: background-color .18s ease, border-color .18s ease;
+    }
+
+    .graph-card .gc-kw-toggle.is-on {
+      color: var(--accent);
+      border-color: var(--accent-soft);
+      background: rgba(96, 153, 148, 0.10);
+    }
+
+    .graph-card .gc-kw-toggle.is-on .gckw-dot {
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
     .graph-card .gc-hint {
@@ -1958,7 +2006,14 @@
       }
 
       .graph-card {
-        height: clamp(360px, 70vh, 640px);
+        height: clamp(420px, 72vh, 660px);
+      }
+
+      .graph-card .gc-kw-toggle {
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px 5px 8px;
+        font-size: 9px;
       }
 
     }
@@ -2081,7 +2136,7 @@
 
         <div class="graph-card">
           <canvas id="graph-canvas" aria-hidden="true"></canvas>
-          <div class="gc-hint">left: the problem still open · right: resolved · click a node to open the paper</div>
+          <div class="gc-hint">click a paper to open it · drag to rearrange</div>
           <div class="paper-popup" id="paper-popup" data-side="bottom"></div>
           <div class="gc-hover-panel" id="gc-hover-panel" aria-hidden="true"></div>
         </div>
@@ -3405,9 +3460,27 @@
       let edges = [];
       let scribble = [];           /* the design-process trace, in card space */
       let processPath = [];        /* sampled spine of the process, for placing nodes */
+      let showKeywords = false;    /* keywords are opt-in — the toggle in the card */
+      let kwFade = 0;              /* eased 0→1 so keywords appear rather than pop */
+
+      /* The named stretches of the process, drawn as a scale under the trace. */
+      const STAGES = [
+        { from: 0.00, to: 0.32, label: 'Explore', note: 'problem still open' },
+        { from: 0.32, to: 0.74, label: 'Interact', note: 'intent taking shape' },
+        { from: 0.74, to: 1.00, label: 'Resolve', note: 'outcome settled' },
+      ];
       const mouse = { x: -9999, y: -9999, active: false };
       let hoverIdx = -1;
       let pinnedIdx = -1;
+
+      /* palette hex → rgba, for the glass fills */
+      function hexA(hex, a) {
+        const h = hex.replace('#', '');
+        const v = h.length === 3
+          ? h.split('').map(c => parseInt(c + c, 16))
+          : [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+        return `rgba(${v[0]}, ${v[1]}, ${v[2]}, ${a})`;
+      }
 
       /* deterministic RNG so the layout is stable across redraws within a session */
       function mulberry32(a) {
@@ -3420,13 +3493,13 @@
       }
 
       /* ---------- the design-process trace ----------
-         A left→right spine that begins as a dense tangle and unwinds into a
-         settled line. This is the background the whole map is read against:
-         x ≈ 0 is the problem still open, x ≈ 1 is the outcome resolved. */
+         ONE continuous stroke, the way the reference figures draw it: it starts as a
+         tight tangle where the problem is still open, loosens through the middle, and
+         runs out as a single clean line once it resolves. x is the axis of meaning —
+         x ≈ 0 is open, x ≈ 1 is resolved — and every paper is placed against it. */
       function processSpine(u) {
-        /* the spine itself is gently descending then levelling out */
         const x = MARGIN_L + u * (W - MARGIN_L - MARGIN_R);
-        const y = H * (0.50 + 0.06 * Math.sin(u * Math.PI * 1.1));
+        const y = H * 0.52;
         return { x, y };
       }
 
@@ -3436,43 +3509,41 @@
         scribble = [];
         processPath = [];
 
-        /* sample the spine for node placement */
-        for (let i = 0; i <= 200; i++) processPath.push(processSpine(i / 200));
+        for (let i = 0; i <= 240; i++) processPath.push(processSpine(i / 240));
 
-        /* Several strokes share the spine. Near u=0 they loop wildly around it
-           (the tangle); as u grows the loops shrink until every stroke collapses
-           onto the spine — the same gesture as the reference figure. */
-        const STROKES = 7;
-        for (let s = 0; s < STROKES; s++) {
-          const pts = [];
-          const STEPS = 340;
-          const f1 = 5 + rand() * 9;          /* loop frequency  */
-          const f2 = 4 + rand() * 8;
-          const p1 = rand() * Math.PI * 2;
-          const p2 = rand() * Math.PI * 2;
-          const lean = (rand() - 0.5) * 0.5;
+        /* A single pen stroke. Amplitude and loop frequency both decay with u, so the
+           line spirals densely at the left and straightens out to the right. The
+           vertical term uses a spiral (sin) against a slower drift so the loops close
+           on themselves rather than reading as a sine wave. */
+        const pts = [];
+        const STEPS = 1400;
+        const TURNS = 15;                 /* how many loops the tangle makes */
+        const ph = rand() * Math.PI * 2;
 
-          for (let i = 0; i <= STEPS; i++) {
-            const u = i / STEPS;
-            const base = processSpine(u);
+        for (let i = 0; i <= STEPS; i++) {
+          const u = i / STEPS;
+          const base = processSpine(u);
 
-            /* chaos falls off sharply — most of the tangling lives in the first third */
-            const chaos = Math.pow(1 - u, 2.4);
-            const ampX = W * 0.085 * chaos;
-            const ampY = H * 0.30 * chaos;
+          /* chaos: strong to ~0.30, gone by ~0.62 */
+          const chaos = Math.pow(Math.max(0, 1 - u / 0.62), 1.9);
 
-            const x = base.x
-              + Math.sin(u * Math.PI * 2 * f1 + p1) * ampX
-              + Math.cos(u * Math.PI * 2 * f1 * 0.37 + p2) * ampX * 0.7;
-            const y = base.y
-              + Math.cos(u * Math.PI * 2 * f2 + p2) * ampY
-              + Math.sin(u * Math.PI * 2 * f2 * 0.53 + p1) * ampY * 0.55
-              + lean * H * 0.04 * (1 - chaos);
+          /* the loop angle advances fast at first, then slows as it unwinds */
+          const theta = Math.pow(u, 0.62) * Math.PI * 2 * TURNS + ph;
 
-            pts.push({ x, y, u });
-          }
-          scribble.push({ pts, drift: rand() * Math.PI * 2, speed: 0.3 + rand() * 0.5 });
+          const ampY = H * 0.30 * chaos;
+          const ampX = W * 0.030 * chaos;
+
+          /* second harmonic keeps the tangle from looking mechanical */
+          const x = base.x
+            + Math.cos(theta) * ampX
+            + Math.cos(theta * 0.47 + ph) * ampX * 0.8;
+          const y = base.y
+            + Math.sin(theta) * ampY
+            + Math.sin(theta * 0.41 + ph) * ampY * 0.34;
+
+          pts.push({ x, y, u });
         }
+        scribble.push({ pts });
       }
 
       /* ---------- layout: papers on the process, keywords between them ---------- */
@@ -3488,22 +3559,27 @@
 
         const paperIds = Object.keys(PAPERS);
 
-        /* --- papers: x from the stage, y spread around the spine so labels clear --- */
+        /* --- papers: glass circles set against the process, x fixed by stage --- */
         const byStage = paperIds.slice().sort((a, b) => PAPERS[a].stage - PAPERS[b].stage);
 
-        /* alternate above/below the spine, and give crowded stages more offset */
+        /* Radius carries weight: first-author / selected work reads larger. Circles
+           alternate above and below the trace, and any that would collide on x are
+           pushed further out so the bubbles never sit on top of one another. */
         let side = 1;
-        byStage.forEach((pid, i) => {
+        byStage.forEach((pid) => {
           const p = PAPERS[pid];
           const u = p.stage;
           const base = processSpine(u);
 
-          /* how many neighbours sit close on the x axis — crowding pushes further out */
-          const near = byStage.filter(q => Math.abs(PAPERS[q].stage - u) < 0.09).length;
-          const spread = 0.13 + 0.055 * near + rand() * 0.03;
+          const near = byStage.filter(q => Math.abs(PAPERS[q].stage - u) < 0.10).length;
+          /* bubbles scale with the card so a narrow viewport does not jam them together */
+          const scale = Math.max(0.62, Math.min(1, Math.min(W / 780, H / 420)));
+          const R = ((p.selected ? 40 : 32) + Math.min(6, near * 1.5)) * scale;
 
           side = -side;
-          const oy = side * H * spread;
+          /* clear the trace by the bubble radius plus breathing room */
+          const lift = R + 26 + (near > 2 ? 16 : 0);
+          const ty = base.y + side * lift;
 
           nodes.push({
             kind: 'paper',
@@ -3511,19 +3587,47 @@
             label: p.node || p.short.split('—')[0].trim(),
             papers: [pid],
             stage: u,
-            /* the anchor on the spine this paper addresses */
             ax: base.x,
             ay: base.y,
+            side,
             tx: base.x,
-            ty: Math.max(38, Math.min(H - 38, base.y + oy)),
+            ty: Math.max(R + 14, Math.min(H - R - 30, ty)),
             x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
-            baseR: p.selected ? 7.5 : 6,
+            baseR: R,
             color: THEME_COLOR[(p.themes && p.themes[0]) || 'genai'] || COLORS.nodeA,
             phase: rand() * Math.PI * 2,
           });
         });
 
-        /* --- keywords: at the mean stage of the papers they join, near the spine --- */
+        /* Resolve any bubbles that still overlap by pushing them further from the
+           trace along y — x is meaning and must not move. */
+        {
+          const bubbles = nodes.filter(n => n.kind === 'paper');
+          for (let pass = 0; pass < 60; pass++) {
+            let moved = false;
+            for (let a = 0; a < bubbles.length; a++) {
+              for (let b = a + 1; b < bubbles.length; b++) {
+                const A = bubbles[a], B = bubbles[b];
+                const dx = B.tx - A.tx, dy = B.ty - A.ty;
+                const need = A.baseR + B.baseR + 12;
+                const d = Math.hypot(dx, dy);
+                if (d >= need || d === 0) continue;
+                /* separate vertically, away from the trace on each one's own side */
+                const push = (need - d) / 2 + 0.5;
+                A.ty -= Math.sign(dy || (A.side < 0 ? 1 : -1)) * push;
+                B.ty += Math.sign(dy || (A.side < 0 ? 1 : -1)) * push;
+                moved = true;
+              }
+            }
+            if (!moved) break;
+          }
+          /* keep every bubble on the canvas */
+          for (const n of bubbles) {
+            n.ty = Math.max(n.baseR + 12, Math.min(H - n.baseR - 58, n.ty));
+          }
+        }
+
+        /* --- keywords: hidden by default, shown by the toggle --- */
         const kwPicked = KEYWORD_MAP.filter(k => k.papers.filter(id => PAPERS[id]).length >= 2);
         kwPicked.forEach((k) => {
           const rel = k.papers.filter(pid => PAPERS[pid]);
@@ -3538,8 +3642,8 @@
             stage: mu,
             ax: base.x,
             ay: base.y,
-            tx: base.x + (rand() - 0.5) * W * 0.035,
-            ty: base.y + (rand() - 0.5) * H * 0.16,
+            tx: base.x + (rand() - 0.5) * W * 0.05,
+            ty: base.y + (rand() - 0.5) * H * 0.30,
             x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
             baseR: 3.2 + Math.min(rel.length, 5) * 0.42,
             color: COLORS.nodeB,
@@ -3598,10 +3702,10 @@
       function nodeAt(mx, my) {
         for (let i = nodes.length - 1; i >= 0; i--) {
           const n = nodes[i];
-          if (n.alpha !== undefined && n.alpha < 0.25) continue;   /* not visible yet */
+          if (n.kind === 'kw' && kwFade < 0.35) continue;   /* keyword layer is off */
           const x = n.dx !== undefined ? n.dx : n.x;
           const y = n.dy !== undefined ? n.dy : n.y;
-          const hit = n.kind === 'paper' ? 16 : 12;
+          const hit = n.kind === 'paper' ? (n.baseR || 32) : 12;
           const ddx = mx - x, ddy = my - y;
           if (ddx * ddx + ddy * ddy < hit * hit) return i;
           if (n.label && n.labelW) {
@@ -3713,6 +3817,30 @@
         popup.dataset.side = side;
       }
 
+      /* ----- keyword toggle ----- */
+      (function mountToggle() {
+        const btn = document.createElement('button');
+        btn.className = 'gc-kw-toggle';
+        btn.type = 'button';
+        btn.setAttribute('aria-pressed', 'false');
+        btn.innerHTML = `<span class="gckw-dot"></span><span>keywords</span>`;
+        card.appendChild(btn);
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showKeywords = !showKeywords;
+          btn.classList.toggle('is-on', showKeywords);
+          btn.setAttribute('aria-pressed', String(showKeywords));
+          if (!showKeywords && pinnedIdx >= 0 && nodes[pinnedIdx] && nodes[pinnedIdx].kind === 'kw') {
+            closePopup();
+          }
+        });
+        btn.addEventListener('mousedown', e => e.stopPropagation());
+      })();
+
+      function inControls(target) {
+        return !!(target.closest && target.closest('.gc-kw-toggle'));
+      }
+
       resize();
 
       /* ----- mouse handlers (with drag) ----- */
@@ -3755,7 +3883,7 @@
       });
 
       card.addEventListener('mousedown', (e) => {
-        if (popup.contains(e.target)) return;
+        if (popup.contains(e.target) || inControls(e.target)) return;
         const rect = card.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -3784,7 +3912,7 @@
       });
 
       card.addEventListener('click', (e) => {
-        if (popup.contains(e.target)) return;
+        if (popup.contains(e.target) || inControls(e.target)) return;
         const rect = card.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -3801,7 +3929,7 @@
 
       /* touch — tap opens, drag moves */
       card.addEventListener('touchstart', (e) => {
-        if (e.touches[0]) {
+        if (e.touches[0] && !inControls(e.target)) {
           const rect = card.getBoundingClientRect();
           const tx = e.touches[0].clientX - rect.left;
           const ty = e.touches[0].clientY - rect.top;
@@ -3861,47 +3989,66 @@
 
         const activeIdx = pinnedIdx >= 0 ? pinnedIdx : hoverIdx;
 
+        /* ease the keyword layer in and out */
+        kwFade += ((showKeywords ? 1 : 0) - kwFade) * 0.12;
+        if (kwFade < 0.002) kwFade = 0;
+
         /* ---------- the design-process trace ----------
-           Drawn behind everything: a tangle on the left that unwinds to a settled
-           line on the right. Papers are read against it. Chaos in the stroke is a
-           function of x only, so the gesture is stable while the strokes breathe. */
+           Drawn behind everything, as one continuous pen stroke. It breathes only
+           where it is still tangled, so the resolved right-hand run stays perfectly
+           calm — that contrast is the whole point of the figure. */
         {
           ctx.save();
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
-          for (let si = 0; si < scribble.length; si++) {
-            const s = scribble[si];
-            ctx.beginPath();
-            for (let i = 0; i < s.pts.length; i++) {
-              const p = s.pts[i];
-              /* breathing is strongest where the process is still tangled */
-              const chaos = Math.pow(1 - p.u, 2.0);
-              const bx = Math.sin(t * 0.55 * s.speed + p.u * 9 + s.drift) * 5 * chaos;
-              const by = Math.cos(t * 0.48 * s.speed + p.u * 8 + s.drift) * 5 * chaos;
-              const x = p.x + bx;
-              const y = p.y + by;
-              if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          const s = scribble[0];
+          if (s) {
+            /* drawn in short segments so opacity and weight can taper along it */
+            for (let i = 1; i < s.pts.length; i++) {
+              const a = s.pts[i - 1], b = s.pts[i];
+              const u = b.u;
+              const chaos = Math.pow(Math.max(0, 1 - u / 0.62), 1.9);
+
+              const bx1 = Math.sin(t * 0.5 + a.u * 11) * 2.4 * chaos;
+              const by1 = Math.cos(t * 0.44 + a.u * 9) * 2.4 * chaos;
+              const bx2 = Math.sin(t * 0.5 + b.u * 11) * 2.4 * chaos;
+              const by2 = Math.cos(t * 0.44 + b.u * 9) * 2.4 * chaos;
+
+              /* the tangle is ink; the resolved run picks up the accent */
+              const alpha = 0.30 - 0.10 * u;
+              const mix = Math.min(1, Math.max(0, (u - 0.45) / 0.25));
+              const col = mix < 1
+                ? `rgba(90, 88, 104, ${(alpha * (1 - mix)).toFixed(3)})`
+                : null;
+
+              ctx.beginPath();
+              ctx.moveTo(a.x + bx1, a.y + by1);
+              ctx.lineTo(b.x + bx2, b.y + by2);
+              if (col) {
+                ctx.strokeStyle = col;
+                ctx.lineWidth = 0.95;
+                ctx.stroke();
+              }
+              if (mix > 0) {
+                ctx.strokeStyle = `rgba(96, 153, 148, ${(0.34 * mix).toFixed(3)})`;
+                ctx.lineWidth = 1.15;
+                ctx.stroke();
+              }
             }
-            const a = 0.20 + 0.10 * Math.sin(t * 0.4 + si);
-            ctx.strokeStyle = `rgba(124, 119, 155, ${a.toFixed(3)})`;
-            ctx.lineWidth = 0.85;
-            ctx.stroke();
           }
 
-          /* the resolved tail: one clean stroke carrying through to the right edge */
+          /* the resolved line runs out to the right edge */
           ctx.beginPath();
           let started = false;
           for (let i = 0; i < processPath.length; i++) {
             const p = processPath[i];
             const u = i / (processPath.length - 1);
-            if (u < 0.42) continue;
-            const fade = Math.min(1, (u - 0.42) / 0.18);
-            const y = p.y + Math.sin(t * 0.3 + u * 3) * 1.2 * (1 - fade);
-            if (!started) { ctx.moveTo(p.x, y); started = true; }
-            else ctx.lineTo(p.x, y);
+            if (u < 0.60) continue;
+            if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+            else ctx.lineTo(p.x, p.y);
           }
           ctx.strokeStyle = 'rgba(96, 153, 148, 0.34)';
-          ctx.lineWidth = 1.1;
+          ctx.lineWidth = 1.15;
           ctx.stroke();
           ctx.restore();
         }
@@ -3963,7 +4110,7 @@
 
           n.dx = n.x + n.ox;
           n.dy = n.y + n.oy;
-          n.alpha = 1;
+          n.alpha = (n.kind === 'kw') ? kwFade : 1;
         }
 
         if (pinnedIdx >= 0 && nodes[pinnedIdx]) positionPopup(pinnedIdx);
@@ -4008,23 +4155,64 @@
           ctx.textBaseline = 'alphabetic';
         }
 
-        /* ---------- process captions ----------
-           Three marks along the bottom naming what the horizontal axis means. */
+        /* ---------- the stage scale ----------
+           A rule under the trace naming the three stretches of the process, so the
+           horizontal axis is legible without having to infer it from the drawing. */
         {
           ctx.save();
-          ctx.font = `500 9px 'JetBrains Mono', monospace`;
-          ctx.fillStyle = 'rgba(154, 154, 160, 0.9)';
-          const capY = H - 16;
-          const marks = [
-            { u: 0.03, text: 'O P E N', align: 'left' },
-            { u: 0.50, text: 'I N   P R O C E S S', align: 'center' },
-            { u: 0.97, text: 'R E S O L V E D', align: 'right' },
-          ];
-          for (const m of marks) {
-            const pt = processSpine(m.u);
-            ctx.textAlign = m.align;
-            ctx.fillText(m.text, pt.x, capY);
+          const ruleY = H - 42;
+          const x0 = processSpine(0).x;
+          const x1 = processSpine(1).x;
+
+          /* the rule itself */
+          ctx.beginPath();
+          ctx.moveTo(x0, ruleY);
+          ctx.lineTo(x1, ruleY);
+          ctx.strokeStyle = 'rgba(22, 22, 26, 0.10)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          for (let si = 0; si < STAGES.length; si++) {
+            const st = STAGES[si];
+            const sx = processSpine(st.from).x;
+            const ex = processSpine(st.to).x;
+            const mid = (sx + ex) / 2;
+
+            /* tick at each boundary */
+            ctx.beginPath();
+            ctx.moveTo(sx, ruleY - 4);
+            ctx.lineTo(sx, ruleY + 4);
+            ctx.strokeStyle = 'rgba(22, 22, 26, 0.16)';
+            ctx.stroke();
+
+            /* the segment of rule belonging to this stage, tinted */
+            ctx.beginPath();
+            ctx.moveTo(sx + 2, ruleY);
+            ctx.lineTo(ex - 2, ruleY);
+            ctx.strokeStyle = si === 0 ? 'rgba(124, 119, 155, 0.40)'
+              : si === 1 ? 'rgba(96, 153, 148, 0.40)'
+                : 'rgba(127, 131, 84, 0.42)';
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.font = `600 10px 'JetBrains Mono', monospace`;
+            ctx.fillStyle = 'rgba(74, 74, 82, 0.92)';
+            ctx.fillText(st.label.toUpperCase().split('').join(' '), mid, ruleY + 20);
+
+            ctx.font = `italic 11px Fraunces, serif`;
+            ctx.fillStyle = 'rgba(154, 154, 160, 0.95)';
+            ctx.fillText(st.note, mid, ruleY + 35);
           }
+
+          /* closing tick */
+          ctx.beginPath();
+          ctx.moveTo(x1, ruleY - 4);
+          ctx.lineTo(x1, ruleY + 4);
+          ctx.strokeStyle = 'rgba(22, 22, 26, 0.16)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
           ctx.textAlign = 'left';
           ctx.restore();
         }
@@ -4034,7 +4222,7 @@
         for (const e of edges) {
           const a = nodes[e.a], b = nodes[e.b];
           if (!a || !b) continue;
-          const ea = Math.min(a.alpha, b.alpha);
+          const ea = Math.min(a.alpha, b.alpha) * kwFade;
           if (ea <= 0.02) continue;
           const incident = (e.a === activeIdx || e.b === activeIdx);
           ctx.strokeStyle = incident
@@ -4046,7 +4234,10 @@
           ctx.stroke();
         }
 
-        /* ---------- nodes ---------- */
+        /* ---------- nodes ----------
+           Papers are glass bubbles: a soft tinted fill, a bright rim, and a highlight,
+           so they sit over the trace like the circles in the reference figure. The
+           title is set inside the bubble, wrapped to fit. */
         for (let i = 0; i < nodes.length; i++) {
           const n = nodes[i];
           if (n.alpha <= 0.02) continue;
@@ -4056,84 +4247,133 @@
           const isHover = (i === hoverIdx);
           const isPinned = (i === pinnedIdx);
           const isPaper = n.kind === 'paper';
+          const active = isHover || isPinned;
 
-          /* ambient glow */
-          {
-            const ambR = (isPaper ? 21 : 15) + Math.sin(t * 0.8 + n.phase) * 1.5;
-            const ambGr = ctx.createRadialGradient(x, y, 0, x, y, ambR);
-            ambGr.addColorStop(0, `rgba(255, 255, 255, ${(0.55 * A).toFixed(3)})`);
-            ambGr.addColorStop(0.5, `rgba(255, 255, 255, ${(0.18 * A).toFixed(3)})`);
-            ambGr.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = ambGr;
+          if (isPaper) {
+            const r = n.baseR + Math.sin(t * 0.9 + n.phase) * 0.8 + (active ? 2.5 : 0);
+
+            /* the stalk connecting the bubble back to its point on the process */
             ctx.beginPath();
-            ctx.arc(x, y, ambR, 0, Math.PI * 2);
+            ctx.moveTo(x, y + (n.side > 0 ? -r : r));
+            ctx.lineTo(n.ax, n.ay);
+            ctx.strokeStyle = active
+              ? `rgba(96, 153, 148, ${(0.55 * A).toFixed(3)})`
+              : `rgba(22, 22, 26, ${(0.13 * A).toFixed(3)})`;
+            ctx.lineWidth = active ? 1.2 : 0.8;
+            ctx.setLineDash(active ? [] : [2, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            /* the anchor dot ON the process line */
+            ctx.beginPath();
+            ctx.arc(n.ax, n.ay, active ? 3.4 : 2.4, 0, Math.PI * 2);
+            ctx.fillStyle = active
+              ? `rgba(96, 153, 148, ${A.toFixed(3)})`
+              : `rgba(90, 88, 104, ${(0.55 * A).toFixed(3)})`;
             ctx.fill();
+
+            ctx.globalAlpha = A;
+
+            /* outer bloom */
+            const bloom = ctx.createRadialGradient(x, y, r * 0.6, x, y, r * 1.5);
+            bloom.addColorStop(0, hexA(n.color, active ? 0.20 : 0.12));
+            bloom.addColorStop(1, hexA(n.color, 0));
+            ctx.fillStyle = bloom;
+            ctx.beginPath();
+            ctx.arc(x, y, r * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            /* glass body: tinted, lighter at the top-left */
+            const body = ctx.createRadialGradient(x - r * 0.35, y - r * 0.45, r * 0.1, x, y, r);
+            body.addColorStop(0, hexA(n.color, active ? 0.46 : 0.34));
+            body.addColorStop(0.65, hexA(n.color, active ? 0.30 : 0.20));
+            body.addColorStop(1, hexA(n.color, active ? 0.20 : 0.13));
+            ctx.fillStyle = body;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            /* rim */
+            ctx.strokeStyle = hexA(n.color, active ? 0.85 : 0.52);
+            ctx.lineWidth = active ? 1.5 : 1;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            /* specular highlight across the upper edge */
+            ctx.beginPath();
+            ctx.arc(x, y, r * 0.86, Math.PI * 1.15, Math.PI * 1.75);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${(active ? 0.75 : 0.55).toFixed(3)})`;
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+
+            /* title, wrapped inside the bubble */
+            const words = String(n.label).split(' ');
+            const fs = r > 36 ? 12 : 11;
+            ctx.font = `600 ${fs}px Inter, ui-sans-serif, system-ui, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const maxW = r * 1.62;
+            const lines = [];
+            let cur = '';
+            for (const w of words) {
+              const probe = cur ? cur + ' ' + w : w;
+              if (ctx.measureText(probe).width > maxW && cur) { lines.push(cur); cur = w; }
+              else cur = probe;
+            }
+            if (cur) lines.push(cur);
+
+            const lh = fs * 1.22;
+            const startY = y - ((lines.length - 1) * lh) / 2;
+            ctx.fillStyle = `rgba(22, 22, 26, ${(active ? 0.95 : 0.82).toFixed(3)})`;
+            lines.forEach((ln, li) => ctx.fillText(ln, x, startY + li * lh));
+
+            /* venue under the title, only when the bubble is engaged */
+            if (active) {
+              const p = PAPERS[n.id];
+              if (p) {
+                ctx.font = `9px 'JetBrains Mono', monospace`;
+                ctx.fillStyle = 'rgba(74, 74, 82, 0.85)';
+                ctx.fillText(p.venue, x, startY + lines.length * lh + 2);
+              }
+            }
+
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            ctx.globalAlpha = 1;
+            continue;
           }
 
-          if (isHover || isPinned) {
-            const intensity = (isPinned ? 0.45 : 0.30) * A;
-            const haloR = 28 + (isPinned ? 10 : 6);
-            const gr = ctx.createRadialGradient(x, y, 0, x, y, haloR);
-            gr.addColorStop(0, `rgba(96, 153, 148, ${intensity.toFixed(3)})`);
+          /* ---- keyword nodes: small dots, only while the toggle is on ---- */
+          const r = n.baseR + Math.sin(t * 1.2 + n.phase) * 0.5 + (isHover ? 1.4 : 0);
+
+          if (active) {
+            const gr = ctx.createRadialGradient(x, y, 0, x, y, 24);
+            gr.addColorStop(0, `rgba(96, 153, 148, ${(0.32 * A).toFixed(3)})`);
             gr.addColorStop(1, 'rgba(96, 153, 148, 0)');
             ctx.fillStyle = gr;
             ctx.beginPath();
-            ctx.arc(x, y, haloR, 0, Math.PI * 2);
+            ctx.arc(x, y, 24, 0, Math.PI * 2);
             ctx.fill();
           }
 
-          if (isPinned) {
-            ctx.strokeStyle = `rgba(96, 153, 148, ${(0.85 * A).toFixed(3)})`;
-            ctx.lineWidth = 1.4;
-            ctx.beginPath();
-            ctx.arc(x, y, n.baseR + 5, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.lineWidth = 0.9;
-          }
-
-          const r = n.baseR + Math.sin(t * 1.2 + n.phase) * 0.5 + (isHover ? 1.4 : 0);
-
           ctx.globalAlpha = A;
-          ctx.fillStyle = (isHover || isPinned) ? COLORS.paper : n.color;
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.fill();
-
-          /* papers carry a thin ring so they read as the primary tier */
-          if (isPaper) {
-            ctx.strokeStyle = `rgba(22, 22, 26, ${(0.16 * A).toFixed(3)})`;
-            ctx.lineWidth = 0.9;
-            ctx.beginPath();
-            ctx.arc(x, y, r + 2.6, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-
-          const hi = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
-          hi.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
-          hi.addColorStop(0.7, 'rgba(255, 255, 255, 0)');
-          ctx.fillStyle = hi;
+          ctx.fillStyle = active ? COLORS.paper : n.color;
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
           ctx.globalAlpha = 1;
 
-          /* label — papers always, keywords once mostly resolved or on hover */
-          const showLabel = isPaper || isHover || isPinned || A > 0.85;
-          if (n.label && showLabel) {
-            const la = isPaper ? A : A * (isHover || isPinned ? 1 : 0.9);
-            const fs = (isPaper ? 13.5 : 12) + (isHover ? 1.5 : 0);
-            const weight = (isHover || isPinned || isPaper) ? '500' : '400';
-            ctx.font = `italic ${weight} ${fs}px Fraunces, serif`;
-            ctx.fillStyle = (isHover || isPinned)
-              ? `rgba(22, 22, 26, ${la.toFixed(3)})`
-              : `rgba(22, 22, 26, ${(0.78 * la).toFixed(3)})`;
-
+          if (n.label) {
+            const fs = 11.5 + (isHover ? 1 : 0);
+            ctx.font = `italic ${active ? '500' : '400'} ${fs}px Fraunces, serif`;
+            ctx.fillStyle = `rgba(22, 22, 26, ${((active ? 1 : 0.72) * A).toFixed(3)})`;
             if (n.labelLeft) {
               ctx.textAlign = 'right';
-              ctx.fillText(n.label, x - r - 8, y + 4);
+              ctx.fillText(n.label, x - r - 7, y + 4);
               ctx.textAlign = 'left';
             } else {
-              ctx.fillText(n.label, x + r + 8, y + 4);
+              ctx.fillText(n.label, x + r + 7, y + 4);
             }
           }
         }
