@@ -3896,8 +3896,12 @@
         {
           ctx.save();
           const ruleY = 30;
-          const x0 = processSpine(0).x;
-          const x1 = processSpine(1).x;
+          /* The rule spans the drawing, not the spine: the tangle loops well to the
+             left of processSpine(0), so starting there left the explore stretch
+             visibly short of the work it labels. */
+          const edge = 22;
+          const x0 = edge;
+          const x1 = W - edge;
 
           /* the rule itself */
           ctx.beginPath();
@@ -3909,8 +3913,10 @@
 
           for (let si = 0; si < STAGES.length; si++) {
             const st = STAGES[si];
-            const sx = processSpine(st.from).x;
-            const ex = processSpine(st.to).x;
+            /* Boundaries follow the spine, so a stage sits over the papers it
+               names; only the two outer ends stretch to the edges of the drawing. */
+            const sx = st.from <= 0 ? x0 : processSpine(st.from).x;
+            const ex = st.to >= 1 ? x1 : processSpine(st.to).x;
             const mid = (sx + ex) / 2;
 
             /* tick at each boundary */
