@@ -3309,7 +3309,7 @@
             x: 0, y: 0, vx: 0, vy: 0, ox: 0, oy: 0,
             /* work I led reads larger and in the accent; the rest stays muted */
             lead: !!p.lead,
-            baseR: p.lead ? 5.6 : 3.4,
+            baseR: p.lead ? 5.8 : 4.4,
             color: p.lead ? '#609994' : '#8f8aa8',
             phase: rand() * Math.PI * 2,
             pinned: true,          /* marks stay on the line; they do not drift */
@@ -4058,34 +4058,36 @@
             continue;
           }
 
-          /* ---- keyword nodes: the labelled tier ---- */
-          const hot = active || linked;
-          const r = n.baseR + Math.sin(t * 1.1 + n.phase) * 0.4 + (active ? 1.6 : linked ? 1.1 : 0);
+          /* ---- keyword nodes: the labelled tier ----
+             A related keyword is marked by its WORD going bold, not by the dot
+             changing — the edge already carries the connection, and lighting the
+             nodes as well made the map shout. Only a direct hover alters the dot. */
+          const r = n.baseR + Math.sin(t * 1.1 + n.phase) * 0.4 + (active ? 1.6 : 0);
 
           /* tether back to its place on the process */
           ctx.beginPath();
           ctx.moveTo(x, y + (n.side > 0 ? -r : r));
           ctx.lineTo(n.ax, n.ay);
-          ctx.strokeStyle = hot
-            ? `rgba(96, 153, 148, ${((active ? 0.50 : 0.38) * A).toFixed(3)})`
+          ctx.strokeStyle = active
+            ? `rgba(96, 153, 148, ${(0.50 * A).toFixed(3)})`
             : `rgba(22, 22, 26, ${(0.10 * A).toFixed(3)})`;
-          ctx.lineWidth = hot ? 1.1 : 0.7;
-          ctx.setLineDash(hot ? [] : [2, 3]);
+          ctx.lineWidth = active ? 1.1 : 0.7;
+          ctx.setLineDash(active ? [] : [2, 3]);
           ctx.stroke();
           ctx.setLineDash([]);
 
-          if (hot) {
-            const gr = ctx.createRadialGradient(x, y, 0, x, y, active ? 26 : 22);
-            gr.addColorStop(0, `rgba(96, 153, 148, ${((active ? 0.30 : 0.22) * A).toFixed(3)})`);
+          if (active) {
+            const gr = ctx.createRadialGradient(x, y, 0, x, y, 26);
+            gr.addColorStop(0, `rgba(96, 153, 148, ${(0.30 * A).toFixed(3)})`);
             gr.addColorStop(1, 'rgba(96, 153, 148, 0)');
             ctx.fillStyle = gr;
             ctx.beginPath();
-            ctx.arc(x, y, active ? 26 : 22, 0, Math.PI * 2);
+            ctx.arc(x, y, 26, 0, Math.PI * 2);
             ctx.fill();
           }
 
           ctx.globalAlpha = A;
-          ctx.fillStyle = hot ? '#609994' : hexA(n.color, 0.75);
+          ctx.fillStyle = active ? '#609994' : hexA(n.color, 0.75);
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
@@ -4094,34 +4096,25 @@
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.stroke();
-
-          /* a ring on the related keywords, so they read even at a glance */
-          if (linked) {
-            ctx.strokeStyle = `rgba(96, 153, 148, ${(0.55 * A).toFixed(3)})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(x, y, r + 3.6, 0, Math.PI * 2);
-            ctx.stroke();
-          }
           ctx.globalAlpha = 1;
 
           /* the word, set below or above depending on which side it sits */
           if (n.label) {
-            const fs = 13 + (active ? 0.8 : linked ? 0.4 : 0);
-            ctx.font = `italic ${hot ? '500' : '400'} ${fs}px Fraunces, Lora, serif`;
+            const fs = 13 + (active ? 0.8 : 0);
+            /* bold is the whole signal for a related keyword */
+            const weight = active ? '600' : linked ? '600' : '400';
+            ctx.font = `italic ${weight} ${fs}px Fraunces, Lora, serif`;
             ctx.textAlign = 'center';
-            ctx.fillStyle = active
-              ? `rgba(30, 46, 44, ${A.toFixed(3)})`
-              : linked
-                ? `rgba(30, 46, 44, ${(0.95 * A).toFixed(3)})`
-                : `rgba(44, 58, 56, ${(0.78 * A).toFixed(3)})`;
+            ctx.fillStyle = (active || linked)
+              ? `rgba(24, 38, 36, ${A.toFixed(3)})`
+              : `rgba(44, 58, 56, ${(0.78 * A).toFixed(3)})`;
             const ly = n.side > 0 ? y + r + 16 : y - r - 10;
             ctx.fillText(n.label, x, ly);
 
             /* count of papers behind the word */
             ctx.font = `8.5px 'JetBrains Mono', monospace`;
-            ctx.fillStyle = hot
-              ? `rgba(96, 153, 148, ${((active ? 0.95 : 0.90) * A).toFixed(3)})`
+            ctx.fillStyle = (active || linked)
+              ? `rgba(96, 153, 148, ${(0.95 * A).toFixed(3)})`
               : `rgba(154, 154, 160, ${(0.85 * A).toFixed(3)})`;
             ctx.fillText(`${n.papers.length} papers`, x, n.side > 0 ? ly + 13 : ly - 12);
             ctx.textAlign = 'left';
