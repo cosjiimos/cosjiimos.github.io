@@ -3356,7 +3356,9 @@
            along y within each side. Labels are what collide, so the required gap is
            based on the rendered word width. */
         {
-          ctx.font = `italic 400 13px Fraunces, Lora, serif`;
+          /* measure at the widest state a word reaches — bold 13px on hover — so
+             labels cannot collide once they grow */
+          ctx.font = `italic 600 13px Fraunces, Lora, serif`;
           const kw = nodes.filter(n => n.kind === 'kw');
           for (const n of kw) n.lw = ctx.measureText(n.label).width;
 
@@ -3431,7 +3433,7 @@
              are derived from these widths */
           ctx.font = n.kind === 'paper'
             ? `italic 500 12.5px Fraunces, Lora, serif`
-            : `italic 400 13px Fraunces, Lora, serif`;
+            : `italic 600 13px Fraunces, Lora, serif`;   /* widest state, so the box always covers the word */
           n.labelW = ctx.measureText(n.label).width;
         }
       }
@@ -4100,14 +4102,15 @@
 
           /* the word, set below or above depending on which side it sits */
           if (n.label) {
-            const fs = 13 + (active ? 0.8 : 0);
-            /* bold is the whole signal for a related keyword */
-            const weight = active ? '600' : linked ? '600' : '400';
+            /* The resting word is small and quiet; a related or hovered one steps up
+               to 13px and goes bold black, so the change is the signal. */
+            const fs = (active || linked) ? 13 : 11.5;
+            const weight = (active || linked) ? '600' : '400';
             ctx.font = `italic ${weight} ${fs}px Fraunces, Lora, serif`;
             ctx.textAlign = 'center';
             ctx.fillStyle = (active || linked)
-              ? `rgba(24, 38, 36, ${A.toFixed(3)})`
-              : `rgba(44, 58, 56, ${(0.78 * A).toFixed(3)})`;
+              ? `rgba(16, 16, 20, ${A.toFixed(3)})`
+              : `rgba(44, 58, 56, ${(0.72 * A).toFixed(3)})`;
             const ly = n.side > 0 ? y + r + 16 : y - r - 10;
             ctx.fillText(n.label, x, ly);
 
