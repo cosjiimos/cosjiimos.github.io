@@ -1166,8 +1166,8 @@
     .process-path strong { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; }
     .process-loop { display: flex; align-items: center; justify-content: flex-end; gap: 7px; margin-top: 10px; font-size: 10px; color: #727b78; }
     .process-loop svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.2; }
-    #research .topic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-bottom: 40px; }
-    #research .topic { --stage-color: #527d71; min-width: 0; display: flex; flex-direction: column; padding: 22px; background: #fff; border: 1px solid var(--research-line); border-radius: 4px; scroll-margin-top: 24px; transition: border-color .2s; }
+    #research .topic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 460px)); justify-content: start; gap: 24px; margin-bottom: 40px; }
+    #research .topic { --stage-color: #527d71; width: 100%; max-width: 460px; min-width: 0; display: flex; flex-direction: column; padding: 22px; background: #fff; border: 1px solid var(--research-line); border-radius: 4px; scroll-margin-top: 24px; transition: border-color .2s; }
     #research .topic:nth-child(even) { --stage-color: #74718b; }
     #research .topic:target { border-color: var(--stage-color); }
     #research .topic .ix { display: flex; align-items: center; gap: 9px; margin-bottom: 13px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: #727b78; }
