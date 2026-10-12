@@ -3250,6 +3250,20 @@
 
       /* ===== Paper data (referenced by keywords) ===== */
       const PAPERS = {
+        'creative-trace': {
+          id: 'creative-trace',
+          lead: 'co-first author',
+          stage: 0.34,          /* mining creative traces to inform intent-aligned design iterations */
+          year: 2026,
+          venue: 'IJHCI · 2026',
+          title: 'How Agent-Driven Creative Trace Mining Reshapes Design Behavior in a Deployment Study of Intent-Aligned Multimodal Design',
+          short: 'Creative Trace Mining — Design behavior in intent-aligned multimodal design',
+          node: 'Creative Trace Mining',
+          authors: 'Seung Won Lee†, <b>Jiin Choi†</b>, Yejin Yun†, Semin Jin, Yugyeong Jang, Geunmin Hwang, Sang Woon Park, Seonghoon Ban, Kyung Hoon Hyun<sup>CA</sup>',
+          doi: 'https://doi.org/10.1080/10447318.2026.2739092',
+          themes: ['genai', 'workflow', 'interface'],
+          kws: ['Creative Trace Mining', 'Agentic AI', 'Designer Workflow', 'Intent Alignment', 'Multimodal Design', 'Deployment Study'],
+        },
         advei: {
           id: 'advei',
           stage: 0.58,          /* modeling the cognitive space that drives generation */
@@ -3391,10 +3405,10 @@
       const KEYWORD_MAP = [
         { word: 'externalization', papers: ['canvas', 'sketch'] },
         { word: 'exploration', papers: ['sketch', 'genpara', 'bogen', 'canvas'] },
-        { word: 'designer workflow', papers: ['workflownet', 'canvas', 'multimodal'] },
-        { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas', 'cogchat'] },
-        { word: 'generative AI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat', 'advei'] },
-        { word: 'intent', papers: ['bogen', 'genpara', 'cogchat', 'advei'] },
+        { word: 'designer workflow', papers: ['workflownet', 'canvas', 'multimodal', 'creative-trace'] },
+        { word: 'interface', papers: ['workflownet', 'multimodal', 'canvas', 'cogchat', 'creative-trace'] },
+        { word: 'generative AI', papers: ['sketch', 'genpara', 'multimodal', 'workflownet', 'cogchat', 'advei', 'creative-trace'] },
+        { word: 'intent', papers: ['bogen', 'genpara', 'cogchat', 'advei', 'creative-trace'] },
         { word: 'cognitive structure', papers: ['cogchat', 'advei', 'canvas'] },
         { word: 'knowledge graph', papers: ['cogchat', 'advei'] },
         { word: 'design space', papers: ['bogen', 'genpara', 'sketch', 'advei'] },
@@ -3759,6 +3773,7 @@
             const id = btn.dataset.id;
             const tabBtn = document.querySelector('.nav-item[data-tab="publications"]');
             tabBtn.click();
+            document.querySelector('.pub-subtab[data-sub="pub-int"]').click();
             setTimeout(() => {
               const target = document.getElementById('pub-' + id);
               if (target) {
