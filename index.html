@@ -1219,6 +1219,10 @@
     .cv-pdf-preview { display: block; width: 100%; height: min(80vh, 1000px); min-height: 420px; border: 1px solid var(--line); background: var(--paper); }
 
     /* ===== DESIGN WORKS ===== */
+    .publication-award { margin: 10px 0; color: var(--accent-3); font-size: 12px; }
+    .work-placeholder { display: grid; place-items: center; aspect-ratio: 16 / 9; background: var(--paper); border-bottom: 1px solid var(--line); color: var(--ink-muted); font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: .16em; }
+    .work .award-list { display: grid; gap: 8px; margin-top: 14px; }
+    .work .award-list .award { margin: 0; border-radius: 5px; line-height: 1.7; text-transform: none; letter-spacing: .02em; }
     .works-category {
       margin-bottom: 56px;
     }
@@ -2101,7 +2105,7 @@
                       <a href="https://lswgood0901.github.io/designJournal/" target="_blank" rel="noopener">↗ Project Page</a>
                     </div>
                   </div>
-                  <div class="pub-thumb pending" role="img" aria-label="Thumbnail TBD"></div>
+                  <div class="pub-thumb"><img src="images/DesignJournal_thumbnail_v3_gif.gif" alt="Creative Trace Mining paper thumbnail" loading="lazy"></div>
                 </article>
 
                 <article class="pub" id="pub-advei">
@@ -2147,6 +2151,7 @@
                     <h3>Workflow-Net: Toward Understanding Designer Workflows in Generative AI-Driven Systems through Comparing Node-and Prompt-Based Interfaces</h3>
                     <div class="authors">Tae Hee Jo†, <b>Jiin Choi†</b>, Semin Jin, Seung Won Lee, Yugyeong Jang, Sang Woon Park, Seonghoon Ban, Kyung Hoon Hyun</div>
                     <div class="journal">Archives of Design Research, vol. 39, no. 2 (2026): 7–34</div>
+                    <div class="publication-award">🥇 <strong><em>The Best Research Paper Award</em></strong></div>
                     <div class="links">
                       <a href="http://dx.doi.org/10.15187/adr.2026.05.39.2.7" target="_blank" rel="noopener">↗
                         doi</a>
@@ -2440,6 +2445,21 @@
             <div>EXHIBITION · SPACE · COMPUTING · FURNITURE</div>
             <div><b>2020 — 2026</b></div>
           </div>
+        </div>
+
+        <div class="works-category" id="works-ux-ui">
+          <div class="works-cat-head"><h3>— UX/UI</h3><span class="count">02 works</span></div>
+          <div class="works-grid"><article class="work">
+              <div class="work-placeholder" role="img" aria-label="DesignPresso image coming soon">TBD</div>
+              <div class="body"><div class="cat">/ UX/UI</div><h4>DesignPresso</h4>
+
+              </div>
+            </article><article class="work">
+              <div class="work-placeholder" role="img" aria-label="GenPresso image coming soon">TBD</div>
+              <div class="body"><div class="cat">/ UX/UI</div><h4>GenPresso</h4>
+                <div class="award-list"><div class="award">Global Design iT Award</div><div class="award">제24회 대한민국색채대상 · RED</div><a class="award" href="https://nydigitalawards.com/winner-info.php?id=1142" target="_blank" rel="noopener">NY Design Award ↗</a></div>
+              </div>
+            </article></div>
         </div>
 
         <!-- ============== EXHIBITION ============== -->
@@ -3144,6 +3164,7 @@
           </div>
         </div>
 
+        <div class="cv-block"><div class="cv-title">— Awards</div><div class="cv-row"><div class="when">GenPresso</div><div class="what"><b>Global Design iT Award</b><span>GenPresso</span></div></div><div class="cv-row"><div class="when">GenPresso</div><div class="what"><b>제24회 대한민국색채대상 · RED</b><span>GenPresso</span></div></div><div class="cv-row"><div class="when">GenPresso</div><div class="what"><b><a href="https://nydigitalawards.com/winner-info.php?id=1142" target="_blank" rel="noopener">NY Design Award ↗</a></b><span>GenPresso</span></div></div></div>
         <div class="cv-block">
           <div class="cv-title">— Full CV</div>
           <div class="cv-pdf-links">
